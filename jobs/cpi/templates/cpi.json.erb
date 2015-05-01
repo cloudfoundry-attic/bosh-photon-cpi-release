@@ -1,0 +1,22 @@
+<%=
+
+JSON.dump(
+  "ESXCloud" => {
+    "username" => p("esxcloud.username"),
+    "apiKey" => p("esxcloud.apiKey"),
+  },
+
+  "Actions" => {
+    "Agent" => {
+      "Mbus" => p("cpi.agent.mbus"),
+      "NTP"  => p("cpi.agent.ntp"),
+
+      "Blobstore" => {
+        "Type"    => p("cpi.agent.blobstore.provider"),
+        "Options" => p("cpi.agent.blobstore.options"),
+      },
+    },
+  }
+)
+
+%>

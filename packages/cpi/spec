@@ -1,0 +1,6 @@
+---
+name: cpi
+
+
+files:
+- bosh-esxcloud-cpi/**/*

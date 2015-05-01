@@ -2,3 +2,48 @@
 
 A [BOSH](https://github.com/cloudfoundry/bosh) release for `bosh-esxcloud-cpi` written in Go.
 
+### Example environment
+
+`bosh-esxcloud-cpi` release can be deployed with any BOSH Director
+just like any other BOSH release.
+
+1. Install Vagrant dependencies
+
+```
+vagrant plugin install vagrant-bosh
+gem install bosh_cli --no-ri --no-rdoc
+```
+
+1. Set environment variables
+```
+export ESXCLOUD_TENANT=cpi
+export ESXCLOUD_PROJECT=cpi
+```
+
+1. Create a new VM with BOSH Director and BOSH ESXCloud CPI releases
+
+```
+vagrant up
+```
+
+Note: See [deployment manifest](manifests/esxcloud-bosh.yml)
+to see how bosh and bosh cpi releases are collocated.
+
+1. Target deployed BOSH Director
+
+```
+bosh target localhost:25555
+bosh status
+```
+
+### Running tests
+
+1. Follow instructions above to install the release to your BOSH director
+
+1. Clone BOSH repository into `$HOME/workspace/bosh` to get BATS source code
+
+1. Download vSphere stemcell #3 to `$HOME/Downloads/`
+   from [BOSH Artifacts](http://bosh.io/releases)
+
+1. Run BOSH Acceptance Tests via `spec/run-bats.sh`
+

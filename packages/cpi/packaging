@@ -1,0 +1,15 @@
+set -e
+
+mkdir -p go/src/github.com/esxcloud
+
+mv bosh-esxcloud-cpi go/src/github.com/esxcloud/
+
+cd go/src/github.com/esxcloud/bosh-esxcloud-cpi
+
+pkgs_dir=${BOSH_PACKAGES_DIR:-/var/vcap/packages}
+
+bin/build-linux-amd64
+
+mkdir -p ${BOSH_INSTALL_TARGET}/bin
+
+cp out/cpi ${BOSH_INSTALL_TARGET}/bin/
