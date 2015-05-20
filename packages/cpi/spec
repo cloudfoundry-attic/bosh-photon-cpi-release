@@ -1,6 +1,8 @@
 ---
 name: cpi
 
+dependencies:
+- golang_1.4.2
 
 files:
 - bosh-esxcloud-cpi/**/*
