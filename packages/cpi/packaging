@@ -7,6 +7,8 @@ mv bosh-esxcloud-cpi go/src/github.com/esxcloud/
 cd go/src/github.com/esxcloud/bosh-esxcloud-cpi
 
 pkgs_dir=${BOSH_PACKAGES_DIR:-/var/vcap/packages}
+export GOROOT=$(readlink -nf $pkgs_dir/golang_1.4.2)
+export PATH=$GOROOT/bin:$PATH
 
 bin/build-linux-amd64
 
