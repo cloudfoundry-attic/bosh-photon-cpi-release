@@ -1,0 +1,121 @@
+---
+name: bosh
+
+releases:
+- name: bosh
+  url: http://bosh.io/d/github.com/cloudfoundry/bosh?v=166  # from http://bosh.io/releases
+  sha1: cc25ccbf8609a0fe56a7fe6ce0b0010286bcf6a1
+- name: bosh-esxcloud-cpi
+  version: latest
+  url: file://bosh-esxcloud-cpi-0+dev.53.tgz
+
+resource_pools:
+- name: vms
+  network: default
+  stemcell:
+    url: file://bosh-stemcell-0000-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+  cloud_properties:
+    vm_flavor: core-200
+    disk_flavor: core-200
+
+disk_pools:
+- name: disks
+  disk_size: 20_000
+  cloud_properties:
+    disk_flavor: core-200
+
+networks:
+- name: default
+  type: manual
+  subnets:
+  - range: 10.146.38.0/23
+    gateway: 10.146.39.253
+    dns: [10.132.71.1]
+    cloud_properties: {name: "VM VLAN"}
+
+jobs:
+- name: bosh
+  instances: 1
+
+  networks:
+  - name: default
+    static_ips: [10.146.38.111]
+
+  templates:
+  - name: nats
+    release: bosh
+  - name: redis
+    release: bosh
+  - name: blobstore
+    release: bosh
+  - name: postgres
+    release: bosh
+  - name: director
+    release: bosh
+  - name: health_monitor
+    release: bosh
+  - name: cpi
+    release: bosh-esxcloud-cpi
+
+  resource_pool: vms
+  persistent_disk_pool: disks
+
+  properties:
+    ntp: &ntp [10.132.71.1]
+
+    nats:
+      user: nats
+      password: nats-password
+      address: 127.0.0.1
+      port: 4222
+
+    blobstore:
+      address: 10.146.38.111
+      port: 25250
+      provider: dav
+      director: {user: director, password: director-password}
+      agent: {user: agent, password: agent-password}
+
+    postgres: &db
+      user: bosh
+      password: bosh-password
+      host: 127.0.0.1
+      port: 5432
+      database: bosh
+      adapter: postgres
+
+    redis:
+      password: redis-password
+      listen_addresss: 127.0.0.1
+      address: 127.0.0.1
+
+    director:
+      name: bosh-in-esxcloud
+      address: 127.0.0.1
+      db: *db
+      cpi_job: cpi
+
+    hm:
+      http: {user: hm, password: hm-password}
+      director_account: {user: admin, password: admin}
+      resurrector_enabled: true
+
+    agent: {mbus: "nats://nats:nats-password@10.146.38.111:4222"}
+
+    # esxcloud job template
+    esxcloud: &esxcloud
+      target: http://10.146.38.100:8080
+      user: dev
+      password: pwd
+      tenant: demo
+      project: 41ad55a8-92a8-47c5-a875-9aa7fa8241aa
+
+cloud_provider:
+  template: {name: cpi, release: bosh-esxcloud-cpi}
+  mbus: "https://mbus:mbus-password@10.146.38.111:6868"
+
+  properties:
+    agent: {mbus: "https://mbus:mbus-password@0.0.0.0:6868"}
+    blobstore: {provider: local, path: /var/vcap/micro_bosh/data/cache}
+    ntp: *ntp
+    esxcloud: *esxcloud
