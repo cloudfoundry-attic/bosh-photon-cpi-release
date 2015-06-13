@@ -10,8 +10,13 @@ JSON.dump(
   },
 
   "Agent" => {
-    "Mbus" => p("cpi.agent.mbus"),
+    "Mbus" => p("agent.mbus"),
     "NTP"  => p("ntp"),
+
+    "Blobstore" => {
+      "Provider" => p("blobstore.provider"),
+      "Options"  => p("blobstore.options"),
+    },
   }
 )
 

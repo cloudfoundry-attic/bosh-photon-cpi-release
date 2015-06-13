@@ -16,10 +16,6 @@ properties:
     description: "IP address of the host that will be used by containers, must be the same as mbus IP"
     example: "10.254.50.4"
 
-  cpi.agent.mbus:
-    description: "Mbus URL used by deployed BOSH agents"
-    example: "nats://nats:nats-password@10.254.50.4:4222"
-
   cpi.agent.ntp:
     description: "NTP configuration used by deployed BOSH agents"
     default: []
@@ -75,3 +71,39 @@ properties:
   cpi.actions.registry.password:
     description: "Password for registry"
     default: ""
+
+  esxcloud.target:
+    description: "ESXCloud API-FE target"
+    default: ""
+
+  esxcloud.user:
+    description: "ESXCloud user"
+    default: ""
+
+  esxcloud.password:
+    description: "ESXCloud user's password"
+    default: ""
+
+  esxcloud.tenant:
+    description: "ESXCloud tenant"
+    default: ""
+
+  esxcloud.project:
+    description: "ESXCloud project"
+    default: ""
+
+  ntp:
+    description: "ntp"
+    default: ""
+
+  agent.mbus:
+    description: "Mbus URL used by deployed BOSH agents"
+    default: "nats://nats:nats-password@10.146.38.111:4222"
+
+  blobstore.provider:
+    description: "Provider type for the blobstore used by deployed BOSH agents (e.g. dav, s3)"
+    default: ""
+
+  blobstore.options:
+    description: "Options for the blobstore used by deployed BOSH agents"
+    default: {}

@@ -3,11 +3,11 @@ name: bosh
 
 releases:
 - name: bosh
-  url: http://bosh.io/d/github.com/cloudfoundry/bosh?v=166  # from http://bosh.io/releases
+  url: http://bosh.io/d/github.com/cloudfoundry/bosh?v=166
   sha1: cc25ccbf8609a0fe56a7fe6ce0b0010286bcf6a1
 - name: bosh-esxcloud-cpi
   version: latest
-  url: file://bosh-esxcloud-cpi-0+dev.53.tgz
+  url: file://bosh-esxcloud-cpi-0+dev.104.tgz
 
 resource_pools:
 - name: vms
@@ -108,7 +108,7 @@ jobs:
       user: dev
       password: pwd
       tenant: demo
-      project: 41ad55a8-92a8-47c5-a875-9aa7fa8241aa
+      project: eee48e9b-e64a-4774-b57e-db2b022400dc
 
 cloud_provider:
   template: {name: cpi, release: bosh-esxcloud-cpi}
@@ -116,6 +116,9 @@ cloud_provider:
 
   properties:
     agent: {mbus: "https://mbus:mbus-password@0.0.0.0:6868"}
-    blobstore: {provider: local, path: /var/vcap/micro_bosh/data/cache}
+    blobstore:
+      provider: local
+      options:
+        blobstore_path: /var/vcap/micro_bosh/data/cache
     ntp: *ntp
     esxcloud: *esxcloud
