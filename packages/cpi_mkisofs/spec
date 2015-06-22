@@ -1,0 +1,6 @@
+---
+name: cpi_mkisofs
+files:
+  - cpi_mkisofs/cdrtools-3.00.tar.bz2
+  - cpi_mkisofs/patch-include_schily_sha2.h
+  - cpi_mkisofs/smake-1.2.4.tar.bz2
