@@ -3,6 +3,8 @@
 pkgs_dir=${BOSH_PACKAGES_DIR:-/var/vcap/packages}
 jobs_dir=${BOSH_JOBS_DIR:-/var/vcap/jobs}
 
+export PATH=$pkgs_dir/cpi_mkisofs/bin:$PATH
+
 cmd="$pkgs_dir/cpi/bin/cpi -configPath=$jobs_dir/cpi/config/cpi.json"
 
 # If this cpi release is used with bosh-micro
@@ -12,3 +14,4 @@ if [ -d /var/vcap/sys/log ]; then
 else
   exec $cmd <&0
 fi
+
