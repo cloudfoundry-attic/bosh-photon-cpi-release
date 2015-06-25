@@ -3,6 +3,7 @@ name: cpi
 
 dependencies:
 - golang_1.4.2
+- cpi_mkisofs
 
 files:
 - bosh-esxcloud-cpi/**/*
