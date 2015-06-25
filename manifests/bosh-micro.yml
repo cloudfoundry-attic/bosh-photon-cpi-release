@@ -7,7 +7,7 @@ releases:
   sha1: cc25ccbf8609a0fe56a7fe6ce0b0010286bcf6a1
 - name: bosh-esxcloud-cpi
   version: latest
-  url: file://bosh-esxcloud-cpi-0+dev.104.tgz
+  url: file://bosh-esxcloud-cpi-0+dev.117.tgz
 
 resource_pools:
 - name: vms
@@ -75,6 +75,10 @@ jobs:
       provider: dav
       director: {user: director, password: director-password}
       agent: {user: agent, password: agent-password}
+      options:
+        endpoint: http://10.146.38.111:25250
+        user: agent
+        password: agent-password
 
     postgres: &db
       user: bosh
@@ -108,7 +112,7 @@ jobs:
       user: dev
       password: pwd
       tenant: demo
-      project: eee48e9b-e64a-4774-b57e-db2b022400dc
+      project: 6e955e8d-4b05-476d-bc8d-8a7775674f04
 
 cloud_provider:
   template: {name: cpi, release: bosh-esxcloud-cpi}

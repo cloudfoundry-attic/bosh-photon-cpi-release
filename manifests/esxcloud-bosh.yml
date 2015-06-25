@@ -1,5 +1,5 @@
 ---
-name: esxcloud-in-vagrant
+name: bosh-in-esxcloud
 
 releases:
 - name: bosh
@@ -9,9 +9,29 @@ releases:
   version: latest
   url: dir+bosh://./
 
+resource_pools:
+- name: vms
+  network: default
+  stemcell:
+    url: file://bosh-stemcell-0000-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+  cloud_properties:
+    vm_flavor: core-200
+    disk_flavor: core-200
+
+disk_pools:
+- name: disks
+  disk_size: 20_000
+  cloud_properties:
+    disk_flavor: core-200
+
 networks:
 - name: default
-  type: dynamic
+  type: manual
+  subnets:
+  - range: 10.146.38.0/23
+    gateway: 10.146.39.253
+    dns: [10.132.71.1]
+    cloud_properties: {name: "VM VLAN"}
 
 update:
   canary_watch_time: 5000 - 90000
@@ -44,7 +64,7 @@ jobs:
     release: bosh-esxcloud-cpi
 
 properties:
-  ntp: ["0.us.pool.ntp.org"]
+  ntp: ["10.132.71.1"]
 
   nats:
     user: nats
@@ -161,7 +181,7 @@ properties:
 
   external_cpi:
     enabled: true
-    name: cpi
+    name: bosh-esxcloud-cpi
 
   # Make current bosh release templates happy
   vcenter:
@@ -181,9 +201,10 @@ properties:
           user: agent
           password: agent-password
 
-  <% require "json" %>
-
   # esxcloud job template
-  esxcloud:
-    tenant: <%= JSON.dump(ENV.fetch("ESXCLOUD_TENANT")) %>
-    project: <%= JSON.dump(ENV.fetch("ESXCLOUD_PROJECT")) %>
+  esxcloud: &esxcloud
+    target: http://10.146.38.100:8080
+    user: dev
+    password: pwd
+    tenant: demo
+    project: eee48e9b-e64a-4774-b57e-db2b022400dc
