@@ -2,7 +2,7 @@
 
 set -e
 
-director_target=192.168.56.4
+director_target=10.146.38.111
 director_user=admin
 director_password=admin
 
@@ -18,23 +18,36 @@ cat > $spec_path << EOF
 ---
 cpi: esxcloud
 properties:
-  static_ip: 10.244.0.2
-  uuid: $director_uuid
+  uuid:  402ba02d-d1e3-472d-96e5-a826246bd249
   pool_size: 1
   instances: 1
   stemcell:
     name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
-    version: latest
-  mbus: nats://nats:0b450ada9f830085e2cdeff6@10.42.49.80:4222
+    version: "0000"
+  mbus: nats://nats:nats-password@10.146.38.111:4222
+  networks:
+  - name: static
+    type: manual
+    cidr: 10.146.39.0/24
+    static_ip: 10.146.39.9
+    static:
+      - 10.146.39.1 - 10.146.39.15
+    reserved:
+      - 10.146.39.100 - 10.146.39.200
+    gateway: 10.146.39.253
+    dns: [10.132.71.1]
+    vlan: "VM VLAN"
 EOF
 
 # Set up env vars used by BATS
 export BAT_DEPLOYMENT_SPEC=$spec_path
-export BAT_STEMCELL=$HOME/Downloads/bosh-stemcell-2957-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+export BAT_STEMCELL=$HOME/src/bosh-deploy/bosh-stemcell-0000-vsphere-esxi-ubuntu-trusty-go_agent.tgz
 export BAT_DIRECTOR=$director_target
 export BAT_DNS_HOST=$director_target
 export BAT_VCAP_PASSWORD=c1oudc0w
+export BAT_INFRASTRUCTURE=esxcloud
+export BAT_NETWORKING=manual
 
-cd $HOME/workspace/bosh/bat
+cd $HOME/src/bosh/bat
 
 bundle exec rake bat
