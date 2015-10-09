@@ -92,6 +92,10 @@ properties:
     description: "ESXCloud project"
     default: ""
 
+  esxcloud.token:
+    description: "ESXCloud Access Token"
+    default: ""
+
   ntp:
     description: "ntp"
     default: ""
