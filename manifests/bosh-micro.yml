@@ -7,13 +7,13 @@ releases:
   sha1: cc25ccbf8609a0fe56a7fe6ce0b0010286bcf6a1
 - name: bosh-esxcloud-cpi
   version: latest
-  url: file://bosh-esxcloud-cpi-0+dev.117.tgz
+  url: file://bosh-esxcloud-cpi-0+dev.137.tgz
 
 resource_pools:
 - name: vms
   network: default
   stemcell:
-    url: file://bosh-stemcell-0000-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+    url: file://bosh-stemcell-0000-esxcloud-esxi-ubuntu-trusty-go_agent.tgz
   cloud_properties:
     vm_flavor: core-200
     disk_flavor: core-200
@@ -112,7 +112,8 @@ jobs:
       user: dev
       password: pwd
       tenant: demo
-      project: 6e955e8d-4b05-476d-bc8d-8a7775674f04
+      project: 0b7859ec-f708-41d6-bb41-f1ed34670231
+      token: eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwaC1hZG1pbkBlc3hjbG91ZCIsImF1ZCI6WyJwaC1hZG1pbkBlc3hjbG91ZCIsInJzX2VzeGNsb3VkIl0sInNjb3BlIjoib3BlbmlkIG9mZmxpbmVfYWNjZXNzIGF0X2dyb3VwcyByc19lc3hjbG91ZCIsImlzcyI6Imh0dHBzOlwvXC8xMC4xNDYuMTcuMjFcL29wZW5pZGNvbm5lY3RcL2VzeGNsb3VkIiwiZ3JvdXBzIjpbImVzeGNsb3VkXFxzZzEiLCJlc3hjbG91ZFxcRXZlcnlvbmUiXSwidG9rZW5fY2xhc3MiOiJhY2Nlc3NfdG9rZW4iLCJ0b2tlbl90eXBlIjoiQmVhcmVyIiwiZXhwIjoxNDQ0NDgyNTA2LCJpYXQiOjE0NDQ0MTA1MDYsInRlbmFudCI6ImVzeGNsb3VkIiwianRpIjoiQmQ0NzRMVm4xS0VFVHJXQlBsVjViMFlWMUhsQ1ZzbFFjRU96U0VnS3A1SSJ9.kWDZqaeC3L1w77qwcqMrW3SFdaSisz_h9dDLkub_Pj0hSIZZNCepFjplB4YnDhTxtIgl-6Q-hTd5w9oL3qrG1lAN_pcnlKJU8uwsK0x85Lm8ta7-P1cZykIQYhAhPi7l_R9VFTvj8Vor3fZ7ZrVWYHeoyyiUUEQKfqzy_pEWodZWfZgCIktV21-0b-qxOKz9V0KEHJiqyYrqX7D02GeMBKxQXDYVV1CNUWtDpkEcGM7BIf1JOSoS19RVrlW-QQhvQBFsXxPJCwx4vn7IV99yPSzHvMhBz4mI1CylVxWtl9iu2Dc5qcCXG9Cuk5JutxqYvcmTQAbnhExeB-MhY7GbfOwsnz1qkXIxNPCjLhQrsbDGj7tUfDjsJ40A4lwYLSafYmMPKEunAgnshx7vhDYvsDUDCGmiHGdj08LOwV8rKVZq4D0Be5pvzZP3DQ5TroIePx9fYbE02Bdgzm5RFDBD-ZbFbQIYzgiLxhQyZSVWCaxcq77NshSJD4GfFMs7W_9Z389zLRgoTx8z0VpJ-HH_enUtn1GoFGdP8kuQGl2zImkhIvBTgjBYlcZu5f2fZL6V3tRHzCw9Ij1lIgYkFO0ii83U9imZ5cNMkOgQlwsBN6wNpWToB2XoN_hcXKzxHHUYwHBvbb2jE10WPZAH0ktPY8pjkV5snmmVT1fKTUR5CBM
 
 cloud_provider:
   template: {name: cpi, release: bosh-esxcloud-cpi}
