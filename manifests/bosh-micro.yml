@@ -54,6 +54,8 @@ jobs:
     release: bosh
   - name: health_monitor
     release: bosh
+  - name: powerdns
+    release: bosh
   - name: cpi
     release: bosh-esxcloud-cpi
 
@@ -105,6 +107,10 @@ jobs:
       resurrector_enabled: true
 
     agent: {mbus: "nats://nats:nats-password@10.146.38.111:4222"}
+
+    dns:
+      address: 127.0.0.1
+      db: *db
 
     # esxcloud job template
     esxcloud: &esxcloud
