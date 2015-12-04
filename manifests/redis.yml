@@ -18,8 +18,8 @@ resource_pools:
 - name: redis-servers
   network: default
   stemcell:
-    name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
-    url: file://bosh-stemcell-0000-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+    name: bosh-photon-esxi-ubuntu-trusty-go_agent
+    url: file://bosh-stemcell-0000-photon-esxi-ubuntu-trusty-go_agent.tgz
     version: "0000"
   cloud_properties:
     vm_flavor: core-200
