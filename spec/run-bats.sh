@@ -16,11 +16,12 @@ spec_path=$PWD/bat.spec
 # Create bat.spec used by BATS to generate BOSH manifest
 cat > $spec_path << EOF
 ---
-cpi: esxcloud
+cpi: photon
 properties:
   uuid:  402ba02d-d1e3-472d-96e5-a826246bd249
   pool_size: 1
   instances: 1
+  second_static_ip: 10.146.39.13
   stemcell:
     name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
     version: "0000"
@@ -56,7 +57,7 @@ export BAT_STEMCELL=$HOME/src/bosh-deploy/bosh-stemcell-0000-vsphere-esxi-ubuntu
 export BAT_DIRECTOR=$director_target
 export BAT_DNS_HOST=$director_target
 export BAT_VCAP_PASSWORD=c1oudc0w
-export BAT_INFRASTRUCTURE=esxcloud
+export BAT_INFRASTRUCTURE=photon
 export BAT_NETWORKING=manual
 
 cd $HOME/src/bosh/bat

@@ -50,7 +50,7 @@ properties:
 
   cpi.actions.guest_persistent_bind_mounts_dir:
     description: "Directory with sub-directories at which persistent disks are mounted inside VMs"
-    default: "/esxcloud-cpi-dev"
+    default: "/photon-cpi-dev"
 
   cpi.actions.agent_env_service:
     description: "Type of Agent Env Service to use, e.g. registry or file"
@@ -72,28 +72,28 @@ properties:
     description: "Password for registry"
     default: ""
 
-  esxcloud.target:
-    description: "ESXCloud API-FE target"
+  photon.target:
+    description: "Photon API-FE target"
     default: ""
 
-  esxcloud.user:
-    description: "ESXCloud user"
+  photon.user:
+    description: "Photon user"
     default: ""
 
-  esxcloud.password:
-    description: "ESXCloud user's password"
+  photon.password:
+    description: "Photon user's password"
     default: ""
 
-  esxcloud.tenant:
-    description: "ESXCloud tenant"
+  photon.tenant:
+    description: "Photon tenant"
     default: ""
 
-  esxcloud.project:
-    description: "ESXCloud project"
+  photon.project:
+    description: "Photon project"
     default: ""
 
-  esxcloud.token:
-    description: "ESXCloud Access Token"
+  photon.token:
+    description: "Photon Access Token"
     default: ""
 
   ntp:
