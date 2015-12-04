@@ -1,10 +1,10 @@
-# bosh-esxcloud-cpi-release
+# bosh-photon-cpi-release
 
-A [BOSH](https://github.com/cloudfoundry/bosh) release for `bosh-esxcloud-cpi` written in Go.
+A [BOSH](https://github.com/cloudfoundry/bosh) release for `bosh-photon-cpi` written in Go.
 
 ### Example environment
 
-`bosh-esxcloud-cpi` release can be deployed with any BOSH Director
+`bosh-photon-cpi` release can be deployed with any BOSH Director
 just like any other BOSH release.
 
 1. Install Vagrant dependencies
@@ -20,13 +20,13 @@ export ESXCLOUD_TENANT=cpi
 export ESXCLOUD_PROJECT=cpi
 ```
 
-1. Create a new VM with BOSH Director and BOSH ESXCloud CPI releases
+1. Create a new VM with BOSH Director and BOSH Photon CPI releases
 
 ```
 vagrant up
 ```
 
-Note: See [deployment manifest](manifests/esxcloud-bosh.yml)
+Note: See [deployment manifest](manifests/photon-bosh.yml)
 to see how bosh and bosh cpi releases are collocated.
 
 1. Target deployed BOSH Director

@@ -1,6 +1,6 @@
 ---
-final_name: bosh-esxcloud-cpi
+final_name: bosh-photon-cpi
 blobstore:
   provider: s3
   options:
-    bucket_name: bosh-esxcloud-cpi-blobs
+    bucket_name: bosh-photon-cpi-blobs
