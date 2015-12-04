@@ -1,3 +1,3 @@
-[submodule "src/bosh-esxcloud-cpi"]
-	path = src/bosh-esxcloud-cpi
-	url = git@github.com:esxcloud/bosh-esxcloud-cpi.git
+[submodule "src/bosh-photon-cpi"]
+	path = src/bosh-photon-cpi
+	url = git@github.com:esxcloud/bosh-photon-cpi.git

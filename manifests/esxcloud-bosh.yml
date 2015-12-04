@@ -1,11 +1,11 @@
 ---
-name: bosh-in-esxcloud
+name: bosh-in-photon
 
 releases:
 - name: bosh
   version: 161
   url: http://bosh.io/d/github.com/cloudfoundry/bosh?v=161  # from http://bosh.io/releases
-- name: bosh-esxcloud-cpi
+- name: bosh-photon-cpi
   version: latest
   url: dir+bosh://./
 
@@ -61,7 +61,7 @@ jobs:
   - name: health_monitor
     release: bosh
   - name: cpi
-    release: bosh-esxcloud-cpi
+    release: bosh-photon-cpi
 
 properties:
   ntp: ["10.132.71.1"]
@@ -96,7 +96,7 @@ properties:
     port: 25255
 
   director:
-    name: bosh-in-esxcloud
+    name: bosh-in-photon
     address: 127.0.0.1
     port: 25555
     encryption: false
@@ -181,7 +181,7 @@ properties:
 
   external_cpi:
     enabled: true
-    name: bosh-esxcloud-cpi
+    name: bosh-photon-cpi
 
   # Make current bosh release templates happy
   vcenter:
@@ -201,8 +201,8 @@ properties:
           user: agent
           password: agent-password
 
-  # esxcloud job template
-  esxcloud: &esxcloud
+  # photon job template
+  photon: &photon
     target: http://10.146.38.100:8080
     user: dev
     password: pwd

@@ -6,4 +6,4 @@ dependencies:
 - cpi_mkisofs
 
 files:
-- bosh-esxcloud-cpi/**/*
+- bosh-photon-cpi/**/*

@@ -13,6 +13,6 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: "apt-get -y install linux-image-extra-$(uname -r)" # aufs
 
   config.vm.provision "bosh" do |c|
-    c.manifest = ERB.new(File.read("manifests/esxcloud-bosh.yml")).result
+    c.manifest = ERB.new(File.read("manifests/photon-bosh.yml")).result
   end
 end
