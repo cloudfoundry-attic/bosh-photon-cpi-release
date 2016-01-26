@@ -17,6 +17,7 @@ spec_path=$PWD/bat.spec
 cat > $spec_path << EOF
 ---
 cpi: photon
+manifest_template_path: $(echo `pwd`/photon.yml.erb)
 properties:
   uuid:  402ba02d-d1e3-472d-96e5-a826246bd249
   pool_size: 1
