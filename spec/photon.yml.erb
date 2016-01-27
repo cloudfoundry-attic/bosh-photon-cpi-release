@@ -80,6 +80,9 @@ jobs:
     networks:
       <% properties.job_networks.each_with_index do |network, i| %>
       - name: <%= network.name %>
+        <% if i == 0 %>
+        default: [dns, gateway]
+        <% end %>
         <% if properties.use_static_ip %>
         static_ips:
         - <%= network.static_ip %>
