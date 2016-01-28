@@ -2,9 +2,9 @@
 name: <%= properties.name || "bat" %>
 director_uuid: <%= properties.uuid %>
 
-release:
-  name: bat
-  version: <%= properties.release || "latest" %>
+releases:
+  - name: bat
+    version: <%= properties.release || "latest" %>
 
 compilation:
   workers: 1
