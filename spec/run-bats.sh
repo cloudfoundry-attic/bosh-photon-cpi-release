@@ -22,10 +22,10 @@ properties:
   uuid:  402ba02d-d1e3-472d-96e5-a826246bd249
   pool_size: 1
   instances: 1
-  second_static_ip: 10.146.39.13
+  second_static_ip: 10.146.39.12
   stemcell:
     name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
-    version: "0000"
+    version: "3184.1"
   mbus: nats://nats:nats-password@10.146.38.111:4222
   networks:
   - name: static
@@ -54,12 +54,13 @@ EOF
 
 # Set up env vars used by BATS
 export BAT_DEPLOYMENT_SPEC=$spec_path
-export BAT_STEMCELL=$HOME/src/bosh-deploy/bosh-stemcell-0000-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+export BAT_STEMCELL=$HOME/src/github.com/esxcloud/bosh-photon-cpi-release/manifests/6/bosh-stemcell-3184.1-vsphere-esxi-ubuntu-trusty-go_agent.tgz
 export BAT_DIRECTOR=$director_target
 export BAT_DNS_HOST=$director_target
 export BAT_VCAP_PASSWORD=c1oudc0w
 export BAT_INFRASTRUCTURE=photon
 export BAT_NETWORKING=manual
+export BAT_SECOND_STATIC_IP=10.146.39.12
 
 cd $HOME/src/bosh/bat
 
