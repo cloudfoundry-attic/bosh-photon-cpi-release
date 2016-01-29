@@ -63,4 +63,5 @@ export BAT_NETWORKING=manual
 
 cd $HOME/src/bosh/bat
 
-bundle exec rake bat
+bundle install
+bundle exec rspec spec --tag ~multiple_manual_networks
