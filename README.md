@@ -14,12 +14,6 @@ vagrant plugin install vagrant-bosh
 gem install bosh_cli --no-ri --no-rdoc
 ```
 
-1. Set environment variables
-```
-export ESXCLOUD_TENANT=cpi
-export ESXCLOUD_PROJECT=cpi
-```
-
 1. Create a new VM with BOSH Director and BOSH Photon CPI releases
 
 ```
