@@ -19,7 +19,7 @@ cat > $spec_path << EOF
 cpi: photon
 manifest_template_path: $(echo `pwd`/photon.yml.erb)
 properties:
-  uuid:  402ba02d-d1e3-472d-96e5-a826246bd249
+  uuid:  $BOSH_UUID
   pool_size: 1
   instances: 1
   second_static_ip: 10.146.39.12
