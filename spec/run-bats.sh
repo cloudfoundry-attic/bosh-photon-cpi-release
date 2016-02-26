@@ -62,7 +62,7 @@ export BAT_INFRASTRUCTURE=photon
 export BAT_NETWORKING=manual
 export BAT_SECOND_STATIC_IP=10.146.39.12
 
-cd $HOME/src/bosh/bat
+cd ../src/bosh/bat
 
 bundle install
 bundle exec rspec spec --tag ~multiple_manual_networks
