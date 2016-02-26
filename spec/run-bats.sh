@@ -54,7 +54,7 @@ EOF
 
 # Set up env vars used by BATS
 export BAT_DEPLOYMENT_SPEC=$spec_path
-export BAT_STEMCELL=$HOME/src/bosh-stemcell-3184.1-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+export BAT_STEMCELL=../src/bosh-stemcell-3184.1-vsphere-esxi-ubuntu-trusty-go_agent.tgz
 export BAT_DIRECTOR=$director_target
 export BAT_DNS_HOST=$director_target
 export BAT_VCAP_PASSWORD=c1oudc0w
