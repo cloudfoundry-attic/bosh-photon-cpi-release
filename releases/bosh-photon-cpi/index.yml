@@ -1,0 +1,5 @@
+---
+builds:
+  da1d721f-385f-4dae-89a7-2810769c256a:
+    version: 0.8.0
+format-version: '2'
