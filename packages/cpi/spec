@@ -6,4 +6,4 @@ dependencies:
 - cpi_mkisofs
 
 files:
-- bosh-photon-cpi/**/*
+- github.com/vmware/bosh-photon-cpi/**/*
