@@ -1,3 +1,0 @@
-[submodule "src/bosh-photon-cpi"]
-	path = src/bosh-photon-cpi
-	url = git@github.com:vmware/bosh-photon-cpi.git

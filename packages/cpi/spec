@@ -6,4 +6,8 @@ dependencies:
 - cpi_mkisofs
 
 files:
-- bosh-photon-cpi/**/*
+- "**/*.go"
+
+excluded_files:
+- github.com/onsi/ginkgo/**/*
+- github.com/onsi/gomega/**/*
