@@ -1,17 +1,20 @@
-set -e
+set -e -x
 
-mkdir -p go/src/github.com/esxcloud
+if [ -z "$BOSH_PACKAGES_DIR" ]; then
+	pkg_dir=$(readlink -nf /var/vcap/packages/golang_1.4.2)
+else
+	pkg_dir=$BOSH_PACKAGES_DIR/golang_1.4.2
+fi
 
-mv bosh-photon-cpi go/src/github.com/esxcloud/
-
-cd go/src/github.com/esxcloud/bosh-photon-cpi
-
-pkgs_dir=${BOSH_PACKAGES_DIR:-/var/vcap/packages}
-export GOROOT=$(readlink -nf $pkgs_dir/golang_1.4.2)
+export GOROOT=$pkg_dir
+export GOPATH=$PWD
 export PATH=$GOROOT/bin:$PATH
 
-bin/build-linux-amd64
+mkdir ../src && cp -a * ../src/ && mv ../src ./src
 
-mkdir -p ${BOSH_INSTALL_TARGET}/bin
+mkdir $BOSH_INSTALL_TARGET/bin
 
-cp out/cpi ${BOSH_INSTALL_TARGET}/bin/
+export GOARCH=amd64
+export GOOS=linux
+export GOTOOLDIR=$(go env GOROOT)/pkg/linux_amd64
+go build -o $BOSH_INSTALL_TARGET/bin/cpi github.com/vmware/bosh-photon-cpi

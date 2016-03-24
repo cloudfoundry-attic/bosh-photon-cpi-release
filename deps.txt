@@ -1,0 +1,3 @@
+c3a655f github.com/onsi/ginkgo/.git
+7ce781e github.com/onsi/gomega/.git
+2295423 github.com/vmware/photon-controller-go-sdk/.git
