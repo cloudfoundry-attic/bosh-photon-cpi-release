@@ -1,0 +1,32 @@
+---
+packages:
+- name: cpi
+  version: 9e53cba28506db153ca00ed64abf4f9fe6487424
+  fingerprint: 9e53cba28506db153ca00ed64abf4f9fe6487424
+  sha1: 76a72da715dfc28f6c80b907e6a702a79f67f62b
+  dependencies:
+  - cpi_mkisofs
+  - golang_1.4.2
+- name: cpi_mkisofs
+  version: 2fd39f3baa2e860943b05b71f4dcba0acfd93f23
+  fingerprint: 2fd39f3baa2e860943b05b71f4dcba0acfd93f23
+  sha1: 34d186360e50721a70adf5e29f6a0bb3f870d3f8
+  dependencies: []
+- name: golang_1.4.2
+  version: 985030ae89322d093bd1ff9c4a37a99956823d07
+  fingerprint: 985030ae89322d093bd1ff9c4a37a99956823d07
+  sha1: 19d695706fe8fca5fde2761fb857d1266fb4a918
+  dependencies: []
+jobs:
+- name: cpi
+  version: ff4cc5a5ecea2724973ea2c38f5530fa274c3890
+  fingerprint: ff4cc5a5ecea2724973ea2c38f5530fa274c3890
+  sha1: 07a137698fc86979a8251f58fbdd0438b4a09101
+license:
+  version: 70d43a1e3d2c8841b90b6663a8b0a9d5c089dfb7
+  fingerprint: 70d43a1e3d2c8841b90b6663a8b0a9d5c089dfb7
+  sha1: 320214056ff9f100b2414466f04441714146b10a
+commit_hash: c20b5f67
+uncommitted_changes: false
+name: bosh-photon-cpi
+version: 0.8.0.u1

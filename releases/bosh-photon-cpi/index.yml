@@ -2,4 +2,6 @@
 builds:
   da1d721f-385f-4dae-89a7-2810769c256a:
     version: 0.8.0
+  f93bfe69-770d-4937-832a-3a956529a085:
+    version: 0.8.0.u1
 format-version: '2'
