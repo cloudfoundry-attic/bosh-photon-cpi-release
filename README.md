@@ -20,7 +20,7 @@ gem install bosh_cli --no-ri --no-rdoc
 vagrant up
 ```
 
-Note: See [deployment manifest](manifests/photon-bosh.yml)
+Note: See [deployment manifest](manifests/bosh-micro.yml)
 to see how bosh and bosh cpi releases are collocated.
 
 1. Target deployed BOSH Director
