@@ -4,16 +4,20 @@ name: bosh
 releases:
 - name: bosh
   url: http://bosh.io/d/github.com/cloudfoundry/bosh?v=246
+  version: 246
   sha1: c410ed4fc53fb1432a5d64174e2222e883173a16
 - name: bosh-photon-cpi
-  version: latest
-  url: file://bosh-photon-cpi-0+dev.7.tgz
+  version: 0.8.0+dev.1
+  url: file:///tmp/bosh-photon-cpi-0.8.0+dev.1.tgz
+
+compilation:
+  network: default
 
 resource_pools:
 - name: vms
   network: default
   stemcell:
-    url: file://bosh-stemcell-3184.1-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+    url: https://bosh.io/d/stemcells/bosh-vsphere-esxi-ubuntu-trusty-go_agent?v=3215
   cloud_properties:
     vm_flavor: core-200
     disk_flavor: core-200
@@ -26,12 +30,7 @@ disk_pools:
 
 networks:
 - name: default
-  type: manual
-  subnets:
-  - range: 10.146.38.0/23
-    gateway: 10.146.39.253
-    dns: [10.132.71.1]
-    cloud_properties: {name: "VM VLAN"}
+  type: dynamic
 
 jobs:
 - name: bosh
@@ -39,7 +38,6 @@ jobs:
 
   networks:
   - name: default
-    static_ips: [10.146.38.111]
 
   templates:
   - name: nats
@@ -63,7 +61,7 @@ jobs:
   persistent_disk_pool: disks
 
   properties:
-    ntp: &ntp [10.132.71.1]
+    ntp: &ntp [0.north-america.pool.ntp.org]
 
     nats:
       user: nats
@@ -72,13 +70,13 @@ jobs:
       port: 4222
 
     blobstore:
-      address: 10.146.38.111
+      address: 127.0.0.11
       port: 25250
       provider: dav
       director: {user: director, password: director-password}
       agent: {user: agent, password: agent-password}
       options:
-        endpoint: http://10.146.38.111:25250
+        endpoint: http://127.0.0.11:25250
         user: agent
         password: agent-password
 
@@ -106,7 +104,7 @@ jobs:
       director_account: {user: admin, password: admin}
       resurrector_enabled: true
 
-    agent: {mbus: "nats://nats:nats-password@10.146.38.111:4222"}
+    agent: {mbus: "nats://nats:nats-password@127.0.0.11:4222"}
 
     dns:
       address: 127.0.0.1
@@ -123,7 +121,7 @@ jobs:
 
 cloud_provider:
   template: {name: cpi, release: bosh-photon-cpi}
-  mbus: "https://mbus:mbus-password@10.146.38.111:6868"
+  mbus: "https://mbus:mbus-password@127.0.0.11:6868"
 
   properties:
     agent: {mbus: "https://mbus:mbus-password@0.0.0.0:6868"}

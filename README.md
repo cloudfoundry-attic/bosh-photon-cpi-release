@@ -14,13 +14,18 @@ vagrant plugin install vagrant-bosh
 gem install bosh_cli --no-ri --no-rdoc
 ```
 
+1. Create a dev release
+```
+bosh -n create release --force
+```
+
 1. Create a new VM with BOSH Director and BOSH Photon CPI releases
 
 ```
 vagrant up
 ```
 
-Note: See [deployment manifest](manifests/photon-bosh.yml)
+Note: See [deployment manifest](manifests/bosh-micro.yml)
 to see how bosh and bosh cpi releases are collocated.
 
 1. Target deployed BOSH Director

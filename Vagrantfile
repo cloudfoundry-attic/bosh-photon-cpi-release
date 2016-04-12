@@ -10,9 +10,9 @@ Vagrant.configure("2") do |config|
     v.cpus = 2
   end
 
-  config.vm.provision "shell", inline: "apt-get -y install linux-image-extra-$(uname -r)" # aufs
-
+  config.vm.provision "shell", inline: "apt-get update && apt-get -y install linux-image-extra-$(uname -r)" # aufs
+  config.vm.provision "file", source: "dev_releases/bosh-photon-cpi/bosh-photon-cpi-0.8.0+dev.1.tgz", destination: "/tmp/bosh-photon-cpi-0.8.0+dev.1.tgz"
   config.vm.provision "bosh" do |c|
-    c.manifest = ERB.new(File.read("manifests/photon-bosh.yml")).result
+    c.manifest = `cat manifests/bosh-micro.yml`
   end
 end
