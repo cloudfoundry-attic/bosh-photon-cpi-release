@@ -51,6 +51,7 @@ func CreateDisk(ctx *cpi.Context, args []interface{}) (result interface{}, err e
 		Kind:       "persistent-disk",
 		CapacityGB: size,
 		Name:       "disk-for-vm-" + vmCID,
+		Affinities: []ec.LocalitySpec{ec.LocalitySpec{Kind: "vm", ID: vmCID}},
 	}
 
 	ctx.Logger.Infof("Creating disk with spec: %#v", diskSpec)
