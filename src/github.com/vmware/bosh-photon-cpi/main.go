@@ -83,8 +83,14 @@ func loadConfig(filePath string) (ctx *cpi.Context, err error) {
 	if err != nil {
 		return
 	}
+
+	token, err := getToken(config.Photon)
+	if err != nil {
+		return
+	}
+
 	tokenOptions := &photon.TokenOptions{
-		AccessToken: config.Photon.Token}
+		AccessToken: token}
 	clientConfig := &photon.ClientOptions{
 		IgnoreCertificate: config.Photon.IgnoreCertificate,
 		TokenOptions:      tokenOptions,
@@ -173,4 +179,26 @@ func createErrorResponse(err error, logData string) []byte {
 		panic(err)
 	}
 	return resBytes
+}
+
+func getToken(photonConfig *cpi.PhotonConfig) (token string, err error) {
+	token = photonConfig.Token;
+
+	if len(photonConfig.Username) == 0 || len(photonConfig.Password) == 0 {
+		return
+	}
+
+	clientConfig := &photon.ClientOptions{
+		IgnoreCertificate: photonConfig.IgnoreCertificate,
+	}
+
+	client := photon.NewClient(photonConfig.Target, clientConfig, nil)
+
+	options, err := client.Auth.GetTokensByPassword(photonConfig.Username, photonConfig.Password)
+	if err != nil {
+		return
+	}
+
+	token = options.AccessToken
+	return
 }
