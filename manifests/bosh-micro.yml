@@ -7,7 +7,7 @@ releases:
   sha1: c410ed4fc53fb1432a5d64174e2222e883173a16
 - name: bosh-photon-cpi
   version: latest
-  url: file://bosh-photon-cpi-0+dev.7.tgz
+  url: file://${BOSH_CPI_RELEASE_FILE_NAME}
 
 resource_pools:
 - name: vms
@@ -28,8 +28,8 @@ networks:
 - name: default
   type: manual
   subnets:
-  - range: 10.146.38.0/23
-    gateway: 10.146.39.253
+  - range: 10.146.56.0/21
+    gateway: 10.146.63.253
     dns: [10.132.71.1]
     cloud_properties: {name: "VM VLAN"}
 
@@ -39,7 +39,7 @@ jobs:
 
   networks:
   - name: default
-    static_ips: [10.146.38.111]
+    static_ips: [10.146.56.72]
 
   templates:
   - name: nats
@@ -72,13 +72,13 @@ jobs:
       port: 4222
 
     blobstore:
-      address: 10.146.38.111
+      address: 10.146.56.72
       port: 25250
       provider: dav
       director: {user: director, password: director-password}
       agent: {user: agent, password: agent-password}
       options:
-        endpoint: http://10.146.38.111:25250
+        endpoint: http://10.146.56.72:25250
         user: agent
         password: agent-password
 
@@ -106,7 +106,7 @@ jobs:
       director_account: {user: admin, password: admin}
       resurrector_enabled: true
 
-    agent: {mbus: "nats://nats:nats-password@10.146.38.111:4222"}
+    agent: {mbus: "nats://nats:nats-password@10.146.56.72:4222"}
 
     dns:
       address: 127.0.0.1
@@ -114,16 +114,16 @@ jobs:
 
     # photon job template
     photon: &photon
-      target: http://10.146.38.100:9000
-      user: dev
-      password: pwd
+      target: https://10.146.56.94:443
+      user: ${PHOTON_USER}
+      password: ${PHOTON_PASSWORD}
+      ignore_cert: true
       tenant: demo
-      project: c7916dc7-5d53-4a6d-a504-5c863663f227
-#      token: eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwaC1hZG1pbkBlc3hjbG91ZCIsImF1ZCI6WyJwaC1hZG1pbkBlc3hjbG91ZCIsInJzX2VzeGNsb3VkIl0sInNjb3BlIjoib3BlbmlkIG9mZmxpbmVfYWNjZXNzIGF0X2dyb3VwcyByc19lc3hjbG91ZCIsImlzcyI6Imh0dHBzOlwvXC8xMC4xNDYuMTcuMjFcL29wZW5pZGNvbm5lY3RcL2VzeGNsb3VkIiwiZ3JvdXBzIjpbImVzeGNsb3VkXFxzZzEiLCJlc3hjbG91ZFxcRXZlcnlvbmUiXSwidG9rZW5fY2xhc3MiOiJhY2Nlc3NfdG9rZW4iLCJ0b2tlbl90eXBlIjoiQmVhcmVyIiwiZXhwIjoxNDQ0NDgyNTA2LCJpYXQiOjE0NDQ0MTA1MDYsInRlbmFudCI6ImVzeGNsb3VkIiwianRpIjoiQmQ0NzRMVm4xS0VFVHJXQlBsVjViMFlWMUhsQ1ZzbFFjRU96U0VnS3A1SSJ9.kWDZqaeC3L1w77qwcqMrW3SFdaSisz_h9dDLkub_Pj0hSIZZNCepFjplB4YnDhTxtIgl-6Q-hTd5w9oL3qrG1lAN_pcnlKJU8uwsK0x85Lm8ta7-P1cZykIQYhAhPi7l_R9VFTvj8Vor3fZ7ZrVWYHeoyyiUUEQKfqzy_pEWodZWfZgCIktV21-0b-qxOKz9V0KEHJiqyYrqX7D02GeMBKxQXDYVV1CNUWtDpkEcGM7BIf1JOSoS19RVrlW-QQhvQBFsXxPJCwx4vn7IV99yPSzHvMhBz4mI1CylVxWtl9iu2Dc5qcCXG9Cuk5JutxqYvcmTQAbnhExeB-MhY7GbfOwsnz1qkXIxNPCjLhQrsbDGj7tUfDjsJ40A4lwYLSafYmMPKEunAgnshx7vhDYvsDUDCGmiHGdj08LOwV8rKVZq4D0Be5pvzZP3DQ5TroIePx9fYbE02Bdgzm5RFDBD-ZbFbQIYzgiLxhQyZSVWCaxcq77NshSJD4GfFMs7W_9Z389zLRgoTx8z0VpJ-HH_enUtn1GoFGdP8kuQGl2zImkhIvBTgjBYlcZu5f2fZL6V3tRHzCw9Ij1lIgYkFO0ii83U9imZ5cNMkOgQlwsBN6wNpWToB2XoN_hcXKzxHHUYwHBvbb2jE10WPZAH0ktPY8pjkV5snmmVT1fKTUR5CBM
+      project: ${PHOTON_PROJECT_ID}
 
 cloud_provider:
   template: {name: cpi, release: bosh-photon-cpi}
-  mbus: "https://mbus:mbus-password@10.146.38.111:6868"
+  mbus: "https://mbus:mbus-password@10.146.56.72:6868"
 
   properties:
     agent: {mbus: "https://mbus:mbus-password@0.0.0.0:6868"}
