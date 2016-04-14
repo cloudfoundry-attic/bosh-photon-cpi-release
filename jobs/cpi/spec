@@ -96,13 +96,17 @@ properties:
     description: "Photon Access Token"
     default: ""
 
+  photon.ignore_cert:
+    description: "Whether to ignore certs check"
+    default: true
+
   ntp:
     description: "ntp"
     default: ""
 
   agent.mbus:
     description: "Mbus URL used by deployed BOSH agents"
-    default: "nats://nats:nats-password@10.146.38.111:4222"
+    default: "nats://nats:nats-password@10.146.56.72:4222"
 
   blobstore.provider:
     description: "Provider type for the blobstore used by deployed BOSH agents (e.g. dav, s3)"

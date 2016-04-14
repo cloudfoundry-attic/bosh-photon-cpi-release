@@ -40,6 +40,8 @@ type PhotonConfig struct {
 	TenantID          string `json:"tenant"`
 	IgnoreCertificate bool   `json:"ignore_cert"`
 	Token             string `json:"token"`
+	Username          string `json:"user"`
+	Password          string `json:"password"`
 }
 
 type ActionFn func(*Context, []interface{}) (interface{}, error)
