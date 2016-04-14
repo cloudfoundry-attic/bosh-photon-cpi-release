@@ -96,6 +96,10 @@ properties:
     description: "Photon Access Token"
     default: ""
 
+  photon.ignore_cert:
+    description: "Whether to ignore certs check"
+    default: true
+
   ntp:
     description: "ntp"
     default: ""
