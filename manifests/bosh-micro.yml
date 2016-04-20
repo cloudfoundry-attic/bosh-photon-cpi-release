@@ -31,7 +31,8 @@ networks:
   - range: 10.146.56.0/21
     gateway: 10.146.63.253
     dns: [10.132.71.1]
-    cloud_properties: {name: "VM VLAN"}
+    cloud_properties:
+      id: ${NETWORK_ID}
 
 jobs:
 - name: bosh
@@ -106,7 +107,7 @@ jobs:
       director_account: {user: admin, password: admin}
       resurrector_enabled: true
 
-    agent: {mbus: "nats://nats:nats-password@10.146.56.72:4222"}
+    agent: {mbus: 'nats://nats:nats-password@10.146.56.72:4222'}
 
     dns:
       address: 127.0.0.1
@@ -123,10 +124,10 @@ jobs:
 
 cloud_provider:
   template: {name: cpi, release: bosh-photon-cpi}
-  mbus: "https://mbus:mbus-password@10.146.56.72:6868"
+  mbus: 'https://mbus:mbus-password@10.146.56.72:6868'
 
   properties:
-    agent: {mbus: "https://mbus:mbus-password@0.0.0.0:6868"}
+    agent: {mbus: 'https://mbus:mbus-password@0.0.0.0:6868'}
     blobstore:
       provider: local
       options:
