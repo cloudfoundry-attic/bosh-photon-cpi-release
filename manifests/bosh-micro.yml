@@ -31,7 +31,8 @@ networks:
   - range: 10.146.56.0/21
     gateway: 10.146.63.253
     dns: [10.132.71.1]
-    cloud_properties: {name: "VM VLAN"}
+    cloud_properties:
+      id: ${NETWORK_ID}
 
 jobs:
 - name: bosh
