@@ -12,6 +12,7 @@ package main
 import (
 	"errors"
 	"net/http"
+	"fmt"
 
 	"github.com/vmware/bosh-photon-cpi/cpi"
 	ec "github.com/vmware/photon-controller-go-sdk/photon"
@@ -86,6 +87,13 @@ func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 		"CreateVM with agent_id: '%v', stemcell_cid: '%v', cloud_properties: '%v', networks: '%v', env: '%v'",
 		agentID, stemcellCID, cloudProps, networks, env)
 
+	var networkList []string
+	for  key, network := range networks {
+		fmt.Println(key);
+		fmt.Println(network);
+		//networkList = append(networkList, network["cloud_properties"].(map[string]interface{})["id"].(string))
+	}
+
 	ephDiskName := "bosh-ephemeral-disk"
 	spec := &ec.VmCreateSpec{
 		Name:          "bosh-vm",
@@ -109,6 +117,7 @@ func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 				BootDisk:   false,
 			},
 		},
+		Networks:	networkList,
 	}
 	ctx.Logger.Infof("Creating VM with spec: %#v", spec)
 	vmTask, err := ctx.Client.Projects.CreateVM(ctx.Config.Photon.ProjectID, spec)
