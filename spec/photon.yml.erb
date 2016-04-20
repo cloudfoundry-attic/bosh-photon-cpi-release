@@ -36,7 +36,7 @@ networks:
     gateway: <%= network.gateway %>
     dns: <%= p('dns').inspect %>
     cloud_properties:
-      name: <%= network.vlan %>
+      id: <%= network.vlan %>
 <% end %>
 
 resource_pools:
