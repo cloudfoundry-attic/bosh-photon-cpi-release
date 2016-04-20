@@ -76,7 +76,12 @@ func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 	if !ok {
 		return nil, errors.New("Unexpected argument where networks should be")
 	}
-	// Ignore args[4] for now, which is disk_cids
+
+	diskCIDList, ok := args[4].([]string)
+	if !ok {
+		return nil, errors.New("Unexpected argument where disk_cid_lists should be")
+	}
+
 	env, ok := args[5].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("Unexpected argument where env should be")
@@ -85,6 +90,17 @@ func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 	ctx.Logger.Infof(
 		"CreateVM with agent_id: '%v', stemcell_cid: '%v', cloud_properties: '%v', networks: '%v', env: '%v'",
 		agentID, stemcellCID, cloudProps, networks, env)
+
+	var affinities []ec.LocalitySpec
+	for _, diskCID := range diskCIDList {
+		affinities = append(affinities, ec.LocalitySpec{Kind: "disk", ID: diskCID})
+	}
+
+	var networkList []string
+	for  _, network := range networks {
+		id := network.(map[string]interface{})["cloud_properties"].(map[string]interface{})["network_id"].(string)
+		networkList = append(networkList, id)
+	}
 
 	ephDiskName := "bosh-ephemeral-disk"
 	spec := &ec.VmCreateSpec{
@@ -109,6 +125,8 @@ func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 				BootDisk:   false,
 			},
 		},
+		Affinities:     affinities,
+		Networks:       networkList,
 	}
 	ctx.Logger.Infof("Creating VM with spec: %#v", spec)
 	vmTask, err := ctx.Client.Projects.CreateVM(ctx.Config.Photon.ProjectID, spec)
