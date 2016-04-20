@@ -2,7 +2,7 @@
 
 set -e
 
-director_target=10.146.56.72
+director_target=$DIRECTOR_IP
 director_user=admin
 director_password=admin
 
@@ -22,34 +22,34 @@ properties:
   uuid:  $director_uuid
   pool_size: 1
   instances: 1
-  second_static_ip: 10.146.62.12
+  second_static_ip: $BAT_SECOND_STATIC_IP
   stemcell:
     name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
     version: "3184.1"
-  mbus: nats://nats:nats-password@10.146.56.72:4222
+  mbus: nats://nats:nats-password@$DIRECTOR_IP:4222
   networks:
   - name: static
     type: manual
-    cidr: 10.146.56.0/21
-    static_ip: 10.146.62.9
+    cidr: $NETWORK_RANGE
+    static_ip: $BAT_STATIC_IP
     static:
-      - 10.146.62.1 - 10.146.62.15
+      - $BAT_IP_RANGE
     reserved:
-      - 10.146.62.100 - 10.146.62.200
-    gateway: 10.146.63.253
+      - $BAT_IP_RESERVED
+    gateway: $NETWORK_GATEWAY
     dns: [10.132.71.1]
-    vlan: "VM VLAN"
+    vlan: $NETWORK_ID
   - name: second
     type: manual
-    cidr: 10.146.56.0/21
-    static_ip: 10.146.62.19
+    cidr: $BAT_NETWORK_RANGE_2
+    static_ip: $BAT_STATIC_IP_2
     static:
-      - 10.146.62.1 - 10.146.62.25
+      - $BAT_IP_RANGE_2
     reserved:
-      - 10.146.62.100 - 10.146.62.200
-    gateway: 10.146.63.253
+      - $BAT_IP_RESERVED_2
+    gateway: $BAT_GATEWAY_2
     dns: [10.132.71.1]
-    vlan: "VM VLAN"
+    vlan: $BAT_NETWORK_ID_2
 EOF
 
 # Set up env vars used by BATS
@@ -60,7 +60,6 @@ export BAT_DNS_HOST=$director_target
 export BAT_VCAP_PASSWORD=c1oudc0w
 export BAT_INFRASTRUCTURE=photon
 export BAT_NETWORKING=manual
-export BAT_SECOND_STATIC_IP=10.146.62.12
 
 cd ../src/bosh/bat
 
