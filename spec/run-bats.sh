@@ -38,7 +38,7 @@ properties:
       - 10.146.62.100 - 10.146.62.200
     gateway: 10.146.63.253
     dns: [10.132.71.1]
-    vlan: "VM VLAN"
+    vlan: $NETWORK_ID
   - name: second
     type: manual
     cidr: 10.146.56.0/21
@@ -49,7 +49,7 @@ properties:
       - 10.146.62.100 - 10.146.62.200
     gateway: 10.146.63.253
     dns: [10.132.71.1]
-    vlan: "VM VLAN"
+    vlan: $NETWORK_ID
 EOF
 
 # Set up env vars used by BATS

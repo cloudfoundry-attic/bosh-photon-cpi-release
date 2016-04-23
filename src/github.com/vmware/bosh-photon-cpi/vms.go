@@ -50,6 +50,43 @@ func ParseCloudProps(cloudPropsMap map[string]interface{}) (cloudProps CloudProp
 	return
 }
 
+func ParseDiskCIDList(diskCIDList []interface{}) (affinities []ec.LocalitySpec, err error) {
+	for _, diskCID := range diskCIDList {
+		diskCIDString, ok := diskCID.(string)
+		if !ok {
+			err = errors.New("error in disk cid list")
+			return
+		}
+		affinities = append(affinities, ec.LocalitySpec{Kind: "disk", ID: diskCIDString})
+	}
+	return
+}
+
+func ParseNetworks(networks map[string]interface{}) (networkList []string, err error) {
+	for  _, network := range networks {
+		networkMap, ok := network.(map[string]interface{})
+		if !ok {
+			err = errors.New("error in networks")
+			return
+		}
+
+		cp, ok := networkMap["cloud_properties"].(map[string]interface{})
+		if !ok {
+			err = errors.New("error in networks:cloud_properties")
+			return
+		}
+
+		network_id, ok := cp["network_id"].(string)
+		if !ok {
+			err = errors.New("error in networks:cloud_properties:netowrk_ip")
+			return
+		}
+
+		networkList = append(networkList, network_id)
+	}
+	return
+}
+
 func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error) {
 	if len(args) < 6 {
 		return nil, errors.New("Expected at least 6 arguments")
@@ -76,7 +113,22 @@ func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 	if !ok {
 		return nil, errors.New("Unexpected argument where networks should be")
 	}
-	// Ignore args[4] for now, which is disk_cids
+
+	networkList, err := ParseNetworks(networks)
+	if err != nil {
+		return nil, err
+	}
+
+	diskCIDList, ok := args[4].([]interface{})
+	if !ok {
+		return nil, errors.New("Unexpected argument where disk_cid_list should be")
+	}
+
+	affinities, err := ParseDiskCIDList(diskCIDList)
+	if err != nil {
+		return nil, err
+	}
+
 	env, ok := args[5].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("Unexpected argument where env should be")
@@ -109,6 +161,8 @@ func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 				BootDisk:   false,
 			},
 		},
+		Affinities:     affinities,
+		Networks:       networkList,
 	}
 	ctx.Logger.Infof("Creating VM with spec: %#v", spec)
 	vmTask, err := ctx.Client.Projects.CreateVM(ctx.Config.Photon.ProjectID, spec)

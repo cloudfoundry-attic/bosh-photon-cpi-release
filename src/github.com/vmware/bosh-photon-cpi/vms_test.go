@@ -180,7 +180,7 @@ var _ = Describe("VMs", func() {
 					"disk_flavor": "fake-flavor",
 				}, // cloud_properties
 				map[string]interface{}{}, // networks
-				[]string{},               // disk_cids
+				[]interface{}{},          // disk_cids
 				map[string]interface{}{}, // environment
 			}
 			res, err := GetResponse(dispatch(ctx, actions, "create_vm", args))
