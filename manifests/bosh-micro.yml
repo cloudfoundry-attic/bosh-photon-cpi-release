@@ -120,7 +120,6 @@ jobs:
       user: ${PHOTON_USER}
       password: ${PHOTON_PASSWORD}
       ignore_cert: true
-      tenant: demo
       project: ${PHOTON_PROJECT_ID}
 
 cloud_provider:

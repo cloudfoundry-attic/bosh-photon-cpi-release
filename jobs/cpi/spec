@@ -84,10 +84,6 @@ properties:
     description: "Photon user's password"
     default: ""
 
-  photon.tenant:
-    description: "Photon tenant"
-    default: ""
-
   photon.project:
     description: "Photon project"
     default: ""

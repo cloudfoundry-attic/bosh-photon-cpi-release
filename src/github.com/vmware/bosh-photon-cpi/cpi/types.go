@@ -37,7 +37,6 @@ type AgentConfig struct {
 type PhotonConfig struct {
 	Target            string `json:"target"`
 	ProjectID         string `json:"project"`
-	TenantID          string `json:"tenant"`
 	IgnoreCertificate bool   `json:"ignore_cert"`
 	Username          string `json:"user"`
 	Password          string `json:"password"`
