@@ -2,6 +2,68 @@
 
 set -e
 
+# Check if all variables in manifest have been set
+if [ -z "$DIRECTOR_IP" ]; then
+  echo "DIRECTOR_IP needs to be set"
+  exit -1
+fi
+if [ -z "$NETWORK_RANGE" ]; then
+  echo "NETWORK_RANGE needs to be set"
+  exit -1
+fi
+if [ -z "$NETWORK_GATEWAY" ]; then
+  echo "NETWORK_GATEWAY needs to be set"
+  exit -1
+fi
+if [ -z "$NETWORK_ID" ]; then
+  echo "NETWORK_ID needs to be set"
+  exit -1
+fi
+if [ -z "$BAT_STATIC_IP" ]; then
+  echo "BAT_STATIC_IP needs to be set"
+  exit -1
+fi
+if [ -z "$BAT_SECOND_STATIC_IP" ]; then
+  echo "BAT_SECOND_STATIC_IP needs to be set"
+  exit -1
+fi
+if [ -z "$BAT_IP_RANGE" ]; then
+  echo "BAT_IP_RANGE needs to be set"
+  exit -1
+fi
+if [ -z "$BAT_IP_RESERVED" ]; then
+  echo "BAT_IP_RESERVED needs to be set"
+  exit -1
+fi
+if [ -z "$STEMCELL_PATH" ]; then
+  echo "STEMCELL_PATH needs to be set"
+  exit -1
+fi
+if [ -z "$BAT_NETWORK_RANGE_2" ]; then
+  echo "BAT_NETWORK_RANGE_2 needs to be set"
+  exit -1
+fi
+if [ -z "$BAT_STATIC_IP_2" ]; then
+  echo "BAT_STATIC_IP_2 needs to be set"
+  exit -1
+fi
+if [ -z "$BAT_IP_RANGE_2" ]; then
+  echo "BAT_IP_RANGE_2 needs to be set"
+  exit -1
+fi
+if [ -z "$BAT_IP_RESERVED_2" ]; then
+  echo "BAT_IP_RESERVED_2 needs to be set"
+  exit -1
+fi
+if [ -z "$BAT_GATEWAY_2" ]; then
+  echo "BAT_GATEWAY_2 needs to be set"
+  exit -1
+fi
+if [ -z "$BAT_NETWORK_ID_2" ]; then
+  echo "BAT_NETWORK_ID_2 needs to be set"
+  exit -1
+fi
+
 director_target=$DIRECTOR_IP
 director_user=admin
 director_password=admin
