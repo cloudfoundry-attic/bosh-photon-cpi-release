@@ -1,9 +1,17 @@
 #!/bin/bash
 
-TESTOUT="./testout"
+set -e
+
+CURDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+TESTOUT="$CURDIR/testout"
 mkdir -p $TESTOUT
-export TEST_TARGET=${TEST_TARGET:-"http://10.146.38.100:8080"}
-export TEST_STEMCELL_URL=${TEST_STEMCELL_URL:-"https://ci.ec.eng.vmware.com/job/bosh-stemcell/lastSuccessfulBuild/artifact/tmp/bosh-stemcell-0000-vsphere-esxi-ubuntu-trusty-go_agent.tgz"}
+
+if [ -z "$TEST_TARGET" ]; then
+  echo "TEST_TARGET needs to be set"
+  exit -1
+fi
+
+export TEST_STEMCELL_URL=${TEST_STEMCELL_URL:-"http://artifactory.ec.eng.vmware.com:3000/bosh-stemcell-3184.1-vsphere-esxi-ubuntu-trusty-go_agent.tgz"}
 export TEST_STEMCELL="$TESTOUT/image"
 export PATH=$GOPATH/bin:$PATH
 
@@ -20,4 +28,4 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Running tests"
-go test -v github.com/vmware/bosh-photon-cpi/inttests
+go test -v github.com/vmware/bosh-photon-cpi/integration

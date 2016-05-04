@@ -26,14 +26,16 @@ var (
 	configPath string
 	tenant     string
 	project    string
-	vmFlavor   string
-	diskFlavor string
 	client     *ec.Client
 )
 
 func ECSetup() (err error) {
 	tenantSpec := &ec.TenantCreateSpec{Name: uniqueName("bosh-cpi-int-tenant")}
 	tenantTask, err := client.Tenants.Create(tenantSpec)
+	if err != nil {
+		return
+	}
+	_, err = client.Tasks.Wait(tenantTask.ID)
 	if err != nil {
 		return
 	}
@@ -47,7 +49,11 @@ func ECSetup() (err error) {
 			ec.QuotaLineItem{Unit: "COUNT", Value: 10, Key: "vm"},
 		},
 	}
-	_, err = client.Tenants.CreateResourceTicket(tenantTask.Entity.ID, resSpec)
+	rtTask, err := client.Tenants.CreateResourceTicket(tenantTask.Entity.ID, resSpec)
+	if err != nil {
+		return
+	}
+	_, err = client.Tasks.Wait(rtTask.ID)
 	if err != nil {
 		return
 	}
@@ -62,40 +68,19 @@ func ECSetup() (err error) {
 			},
 		},
 	}
-
 	projTask, err := client.Tenants.CreateProject(tenantTask.Entity.ID, projSpec)
+	if err != nil {
+		return
+	}
+	_, err = client.Tasks.Wait(projTask.ID)
 	if err != nil {
 		return
 	}
 	fmt.Printf("Project ID: %s\nProject Name: %s\n", projTask.Entity.ID, projSpec.Name)
 
-	diskFlavorSpec := &ec.FlavorCreateSpec{
-		Name: uniqueName("bosh-cpi-int-ephdisk"),
-		Kind: "ephemeral-disk",
-		Cost: []ec.QuotaLineItem{ec.QuotaLineItem{"COUNT", 1, "ephemeral-disk.cost"}},
-	}
-	_, err = client.Flavors.Create(diskFlavorSpec)
-	if err != nil {
-		return
-	}
-
-	vmFlavorSpec := &ec.FlavorCreateSpec{
-		Name: uniqueName("bosh-cpi-int-vm"),
-		Kind: "vm",
-		Cost: []ec.QuotaLineItem{
-			ec.QuotaLineItem{"GB", 2, "vm.memory"},
-			ec.QuotaLineItem{"COUNT", 2, "vm.cpu"},
-		},
-	}
-	_, err = client.Flavors.Create(vmFlavorSpec)
-	if err != nil {
-		return
-	}
-
 	tenant = tenantTask.Entity.ID
 	project = projTask.Entity.ID
-	vmFlavor = vmFlavorSpec.Name
-	diskFlavor = diskFlavorSpec.Name
+
 	return
 }
 
@@ -104,8 +89,7 @@ var _ = BeforeSuite(func() {
 	configJson := `{
 	"photon": {
 		"target": "%s",
-		"project": "%s",
-		"tenant": "%s"
+		"project": "%s"
 	},
 	"agent": {
 		"mbus": "nats://user:pass@127.0.0.1",
@@ -113,7 +97,7 @@ var _ = BeforeSuite(func() {
 	}
 }`
 	target := os.Getenv("TEST_TARGET")
-	client = ec.NewClient(target, nil)
+	client = ec.NewClient(target, nil, nil)
 	fmt.Printf("Target: %s\n", target)
 
 	err := ECSetup()
@@ -164,10 +148,10 @@ var _ = AfterSuite(func() {
 var _ = Describe("Bosh CPI", func() {
 	It("creates a stemcell successfully", func() {
 		stemcell := os.Getenv("TEST_STEMCELL")
-		request := `{ "method": "create_stemcell", "arguments": [ "%s", { "vm_flavor": "%s", "disk_flavor": "%s" } ] }`
-		request = fmt.Sprintf(request, stemcell, vmFlavor, diskFlavor)
+		request := `{ "method": "create_stemcell", "arguments": [ "%s" ] }`
+		request = fmt.Sprintf(request, stemcell)
 
-		cmd := exec.Command("bosh-photon-cpi", "-configPath="+configPath)
+		cmd := exec.Command("../out/cpi", "-configPath="+configPath)
 
 		stdin, err := cmd.StdinPipe()
 		Expect(err).NotTo(HaveOccurred())
@@ -195,7 +179,22 @@ var _ = Describe("Bosh CPI", func() {
 		err = json.Unmarshal(resBytes, response)
 
 		Expect(response.Error).To(BeNil())
+		Expect(response.Result).NotTo(BeNil())
+
+		stemcellID, ok := response.Result.(string)
+		Expect(ok).To(BeTrue())
+
 		fmt.Println(response)
+
+		// delete stemcell
+		task, err := client.Images.Delete(stemcellID)
+		if err != nil {
+			fmt.Println(err)
+		}
+		task, err = client.Tasks.Wait(task.ID)
+		if err != nil {
+			fmt.Println(err)
+		}
 	})
 })
 
