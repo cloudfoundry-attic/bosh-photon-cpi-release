@@ -28,7 +28,7 @@ func CreateStemcell(ctx *cpi.Context, args []interface{}) (result interface{}, e
 		return nil, errors.New("Unexpected argument where image_path should be")
 	}
 
-	ctx.Logger.Infof("CreateStemcell with imagePath: '%s', imagePath")
+	ctx.Logger.Infof("CreateStemcell with imagePath: '%s'", imagePath)
 
 	ctx.Logger.Info("Reading stemcell from disk")
 	stemcell, err := newStemcell(imagePath)
