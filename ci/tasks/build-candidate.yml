@@ -1,0 +1,10 @@
+---
+platform: linux
+image: docker:///virtmerlin/deploy-worker
+inputs:
+  - name: cpi-release
+  - name: release-version
+outputs:
+  - name: cpi-release-candidate
+run:
+  path: cpi-release/ci/tasks/build-candidate.sh
