@@ -1,0 +1,7 @@
+---
+platform: linux
+image: docker:///virtmerlin/deploy-worker
+inputs:
+  - name: cpi-release
+run:
+  path: cpi-release/ci/tasks/unit-test.sh
