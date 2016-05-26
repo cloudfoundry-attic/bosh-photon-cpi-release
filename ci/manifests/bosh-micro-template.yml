@@ -26,11 +26,11 @@ networks:
 - name: default
   type: manual
   subnets:
-  - range: ${NETWORK_RANGE}
-    gateway: ${NETWORK_GATEWAY}
-    dns: [${NETWORK_DNS}]
+  - range: ${PHOTON_NETWORK_SUBNET}
+    gateway: ${PHOTON_NETWORK_GATEWAY}
+    dns: [${PHOTON_NETWORK_DNS}]
     cloud_properties:
-      network_id: ${NETWORK_ID}
+      network_id: ${PHOTON_NETWORK_DIRECTOR_IP}
 
 jobs:
 - name: bosh
@@ -38,7 +38,7 @@ jobs:
 
   networks:
   - name: default
-    static_ips: [${DIRECTOR_IP}]
+    static_ips: [${PHOTON_NETWORK_DIRECTOR_IP}]
 
   templates:
   - name: nats
@@ -62,7 +62,7 @@ jobs:
   persistent_disk_pool: disks
 
   properties:
-    ntp: &ntp [10.132.71.1]
+    ntp: &ntp [${PHOTON_NETWORK_NTP}]
 
     nats:
       user: nats
@@ -77,7 +77,7 @@ jobs:
       director: {user: director, password: director-password}
       agent: {user: agent, password: agent-password}
       options:
-        endpoint: http://${DIRECTOR_IP}:25250
+        endpoint: http://${PHOTON_NETWORK_DIRECTOR_IP}:25250
         user: agent
         password: agent-password
 
@@ -106,7 +106,7 @@ jobs:
       resurrector_enabled: true
 
     agent:
-      mbus: nats://nats:nats-password@${DIRECTOR_IP}:4222
+      mbus: nats://nats:nats-password@${PHOTON_NETWORK_DIRECTOR_IP}:4222
 
     dns:
       address: 127.0.0.1
@@ -119,7 +119,7 @@ jobs:
 
 cloud_provider:
   template: {name: cpi, release: bosh-photon-cpi}
-  mbus: https://mbus:mbus-password@${DIRECTOR_IP}:6868
+  mbus: https://mbus:mbus-password@${PHOTON_NETWORK_DIRECTOR_IP}:6868
 
   properties:
     agent: {mbus: 'https://mbus:mbus-password@0.0.0.0:6868'}

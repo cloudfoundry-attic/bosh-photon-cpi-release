@@ -30,23 +30,28 @@ if [ -z "PHOTON_NETWORK" ]; then
   exit -1
 fi
 
-if [ -z "$DIRECTOR_IP" ]; then
-  echo "DIRECTOR_IP needs to be set"
+if [ -z "$PHOTON_NETWORK_DIRECTOR_IP" ]; then
+  echo "PHOTON_NETWORK_DIRECTOR_IP needs to be set"
   exit -1
 fi
 
-if [ -z "$NETWORK_RANGE" ]; then
-  echo "NETWORK_RANGE needs to be set"
+if [ -z "$PHOTON_NETWORK_SUBNET" ]; then
+  echo "PHOTON_NETWORK_SUBNET needs to be set"
   exit -1
 fi
 
-if [ -z "$NETWORK_GATEWAY" ]; then
-  echo "NETWORK_GATEWAY needs to be set"
+if [ -z "$PHOTON_NETWORK_GATEWAY" ]; then
+  echo "PHOTON_NETWORK_GATEWAY needs to be set"
   exit -1
 fi
 
-if [ -z "$NETWORK_DNS" ]; then
-  echo "NETWORK_DNS needs to be set"
+if [ -z "$PHOTON_NETWORK_DNS" ]; then
+  echo "PHOTON_NETWORK_DNS needs to be set"
+  exit -1
+fi
+
+if [ -z "$PHOTON_NETWORK_NTP" ]; then
+  echo "PHOTON_NETWORK_NTP needs to be set"
   exit -1
 fi
 
