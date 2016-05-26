@@ -50,7 +50,6 @@ if [ -z "$NETWORK_DNS" ]; then
   exit -1
 fi
 
-
 # get the cli
 wget -q -N ${PHOTON_CLI_URL} -o $WORKSPACE/photon
 chmod +x $WORKSPACE/photon
@@ -75,4 +74,4 @@ export BOSH_STEMCELL_FILE_PATH=$WORKSPACE/stemcell/stemcell.tgz
 
 # fix up bosh deployment manifest
 cd $(dirname $0)/../manifests
-eval "echo \"$(< ./bosh-micro-template.yml)\"" > ./bosh-micro.yml
+eval "echo \"$(< ./bosh-micro-template.yml)\"" > $WORKSPACE/bosh-deployment-manifest/bosh-micro.yml

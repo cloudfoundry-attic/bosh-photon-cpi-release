@@ -7,5 +7,7 @@ inputs:
   - name: stemcell
   - name: bosh-init
   - name: bosh-release
+outputs:
+  - name: bosh-deployment-manifest
 run:
-  path: cpi-release/ci/tasks/generate-microbosh-manifest.sh
+  path: cpi-release/ci/tasks/generate-bosh-manifest.sh

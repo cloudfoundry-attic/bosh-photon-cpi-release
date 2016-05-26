@@ -115,9 +115,6 @@ jobs:
     # photon job template
     photon: &photon
       target: ${PHOTON_TARGET}
-      user: ${PHOTON_USER}
-      password: ${PHOTON_PASSWORD}
-      ignore_cert: true
       project: ${PHOTON_PROJECT_ID}
 
 cloud_provider:
