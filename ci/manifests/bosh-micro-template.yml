@@ -1,0 +1,134 @@
+---
+name: bosh
+
+releases:
+- name: bosh
+  url: file://${BOSH_RELEASE_FILE_PATH}
+- name: bosh-photon-cpi
+  url: file://${BOSH_CPI_RELEASE_FILE_PATH}
+
+resource_pools:
+- name: vms
+  network: default
+  stemcell:
+    url: file://${BOSH_STEMCELL_FILE_PATH}
+  cloud_properties:
+    vm_flavor: core-200
+    disk_flavor: core-200
+
+disk_pools:
+- name: disks
+  disk_size: 20_000
+  cloud_properties:
+    disk_flavor: core-200
+
+networks:
+- name: default
+  type: manual
+  subnets:
+  - range: ${NETWORK_RANGE}
+    gateway: ${NETWORK_GATEWAY}
+    dns: [${NETWORK_DNS}]
+    cloud_properties:
+      network_id: ${NETWORK_ID}
+
+jobs:
+- name: bosh
+  instances: 1
+
+  networks:
+  - name: default
+    static_ips: [${DIRECTOR_IP}]
+
+  templates:
+  - name: nats
+    release: bosh
+  - name: redis
+    release: bosh
+  - name: blobstore
+    release: bosh
+  - name: postgres
+    release: bosh
+  - name: director
+    release: bosh
+  - name: health_monitor
+    release: bosh
+  - name: powerdns
+    release: bosh
+  - name: cpi
+    release: bosh-photon-cpi
+
+  resource_pool: vms
+  persistent_disk_pool: disks
+
+  properties:
+    ntp: &ntp [10.132.71.1]
+
+    nats:
+      user: nats
+      password: nats-password
+      address: 127.0.0.1
+      port: 4222
+
+    blobstore:
+      address: ${DIRECTOR_IP}
+      port: 25250
+      provider: dav
+      director: {user: director, password: director-password}
+      agent: {user: agent, password: agent-password}
+      options:
+        endpoint: http://${DIRECTOR_IP}:25250
+        user: agent
+        password: agent-password
+
+    postgres: &db
+      user: bosh
+      password: bosh-password
+      host: 127.0.0.1
+      port: 5432
+      database: bosh
+      adapter: postgres
+
+    redis:
+      password: redis-password
+      listen_addresss: 127.0.0.1
+      address: 127.0.0.1
+
+    director:
+      name: bosh-in-photon
+      address: 127.0.0.1
+      db: *db
+      cpi_job: cpi
+
+    hm:
+      http: {user: hm, password: hm-password}
+      director_account: {user: admin, password: admin}
+      resurrector_enabled: true
+
+    agent:
+      mbus: nats://nats:nats-password@${DIRECTOR_IP}:4222
+
+    dns:
+      address: 127.0.0.1
+      db: *db
+
+    # photon job template
+    photon: &photon
+      target: ${PHOTON_TARGET}
+      user: ${PHOTON_USER}
+      password: ${PHOTON_PASSWORD}
+      ignore_cert: true
+      project: ${PHOTON_PROJECT_ID}
+
+cloud_provider:
+  template: {name: cpi, release: bosh-photon-cpi}
+  mbus: https://mbus:mbus-password@${DIRECTOR_IP}:6868
+
+  properties:
+    agent: {mbus: 'https://mbus:mbus-password@0.0.0.0:6868'}
+    blobstore:
+      provider: local
+      options:
+        blobstore_path: /var/vcap/micro_bosh/data/cache
+    ntp: *ntp
+    photon: *photon
