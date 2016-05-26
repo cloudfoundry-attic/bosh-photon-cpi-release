@@ -78,7 +78,7 @@ func ParseNetworks(networks map[string]interface{}) (networkList []string, err e
 
 		network_id, ok := cp["network_id"].(string)
 		if !ok {
-			err = errors.New("error in networks:cloud_properties:netowrk_ip")
+			err = errors.New("error in networks:cloud_properties:network_id")
 			return
 		}
 
