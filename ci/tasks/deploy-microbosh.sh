@@ -10,5 +10,8 @@ ls -l .
 mv $WORKSPACE/bosh-init/bosh-init-* $WORKSPACE/bosh-init/bosh-init
 chmod +x $WORKSPACE/bosh-init/bosh-init
 
-# delete previous deployment
-$WORKSPACE/bosh-init/bosh-init delete $WORKSPACE/bosh-deployment-manifest/bosh-micro.yml || echo "No previous deployment found."
+# setup deployment
+cp $WORKSPACE/bosh-deployment-manifest/bosh-micro.yml $WORKSPACE/bosh-deployment
+
+# deploy
+$WORKSPACE/bosh-init/bosh-init deploy $WORKSPACE/bosh-deployment/bosh-micro.yml
