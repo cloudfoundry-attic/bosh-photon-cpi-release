@@ -1,0 +1,12 @@
+---
+platform: linux
+image: docker:///virtmerlin/deploy-worker
+inputs:
+  - name: cpi-release
+  - name: cpi-release-candidate
+  - name: stemcell
+  - name: bosh-init
+  - name: bosh-release
+  - name: bosh-deployment-manifest
+run:
+  path: cpi-release/ci/tasks/deploy-microbosh.sh
