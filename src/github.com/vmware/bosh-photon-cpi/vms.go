@@ -136,7 +136,7 @@ func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 
 	ctx.Logger.Infof(
 		"CreateVM with agent_id: '%v', stemcell_cid: '%v', cloud_properties: '%v', networks: '%v', env: '%v'",
-		agentID, stemcellCID, cloudProps, networks, env)
+		agentID, stemcellCID, cloudProps, networkList, env)
 
 	ephDiskName := "bosh-ephemeral-disk"
 	spec := &ec.VmCreateSpec{
@@ -162,7 +162,7 @@ func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 			},
 		},
 		Affinities:     affinities,
-		Networks:       networkList,
+		Subnets:       networkList,
 	}
 	ctx.Logger.Infof("Creating VM with spec: %#v", spec)
 	vmTask, err := ctx.Client.Projects.CreateVM(ctx.Config.Photon.ProjectID, spec)

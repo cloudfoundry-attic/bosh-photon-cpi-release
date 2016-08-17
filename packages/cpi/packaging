@@ -1,9 +1,9 @@
 set -e -x
 
 if [ -z "$BOSH_PACKAGES_DIR" ]; then
-	pkg_dir=$(readlink -nf /var/vcap/packages/golang_1.4.2)
+	pkg_dir=$(readlink -nf /var/vcap/packages/golang_1.6)
 else
-	pkg_dir=$BOSH_PACKAGES_DIR/golang_1.4.2
+	pkg_dir=$BOSH_PACKAGES_DIR/golang_1.6
 fi
 
 export GOROOT=$pkg_dir

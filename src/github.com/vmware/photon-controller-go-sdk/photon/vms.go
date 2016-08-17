@@ -12,6 +12,7 @@ package photon
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 )
 
 // Contains functionality for VMs API.
@@ -83,12 +84,9 @@ func (api *VmAPI) DetachDisk(id string, op *VmDiskOperation) (task *Task, err er
 	return
 }
 
-func (api *VmAPI) AttachISO(id, isoPath string) (task *Task, err error) {
-	res, err := api.client.restClient.MultipartUploadFile(
-		api.client.Endpoint+vmUrl+id+"/attach_iso",
-		isoPath,
-		nil,
-		api.client.options.TokenOptions.AccessToken)
+func (api *VmAPI) AttachISO(id string, reader io.Reader, name string) (task *Task, err error) {
+	res, err := api.client.restClient.MultipartUpload(
+		api.client.Endpoint+vmUrl+id+"/attach_iso", reader, name, nil, api.client.options.TokenOptions.AccessToken)
 	if err != nil {
 		return
 	}
@@ -241,7 +239,7 @@ func (api *VmAPI) GetTasks(id string, options *TaskGetOptions) (result *TaskList
 }
 
 func (api *VmAPI) GetNetworks(id string) (task *Task, err error) {
-	res, err := api.client.restClient.Get(api.client.Endpoint+vmUrl+id+"/networks", api.client.options.TokenOptions.AccessToken)
+	res, err := api.client.restClient.Get(api.client.Endpoint+vmUrl+id+"/subnets", api.client.options.TokenOptions.AccessToken)
 	if err != nil {
 		return
 	}
@@ -267,6 +265,24 @@ func (api *VmAPI) SetTag(id string, tag *VmTag) (task *Task, err error) {
 	}
 	res, err := api.client.restClient.Post(
 		api.client.Endpoint+vmUrl+id+"/tags",
+		"application/json",
+		bytes.NewReader(body),
+		api.client.options.TokenOptions.AccessToken)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+	task, err = getTask(getError(res))
+	return
+}
+
+func (api *VmAPI) CreateImage(id string, options *ImageCreateSpec) (task *Task, err error) {
+	body, err := json.Marshal(options)
+	if err != nil {
+		return
+	}
+	res, err := api.client.restClient.Post(
+		api.client.Endpoint+vmUrl+id+"/create_image",
 		"application/json",
 		bytes.NewReader(body),
 		api.client.options.TokenOptions.AccessToken)

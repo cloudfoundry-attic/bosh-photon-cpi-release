@@ -313,7 +313,7 @@ type VmCreateSpec struct {
 	Affinities    []LocalitySpec    `json:"affinities,omitempty"`
 	Name          string            `json:"name"`
 	Tags          []string          `json:"tags,omitempty"`
-	Networks      []string          `json:"networks,omitempty"`
+	Subnets       []string          `json:"subnets,omitempty"`
 	Environment   map[string]string `json:"environment,omitempty"`
 }
 
@@ -437,13 +437,19 @@ type Hosts struct {
 
 // Creation spec for deployments.
 type DeploymentCreateSpec struct {
-	NTPEndpoint             interface{} `json:"ntpEndpoint"`
-	UseImageDatastoreForVms bool        `json:"useImageDatastoreForVms"`
-	SyslogEndpoint          interface{} `json:"syslogEndpoint"`
-	Stats                   *StatsInfo  `json:"stats"`
-	ImageDatastores         []string    `json:"imageDatastores"`
-	Auth                    *AuthInfo   `json:"auth"`
-	LoadBalancerEnabled     bool        `json:"loadBalancerEnabled"`
+	NTPEndpoint             interface{}                     `json:"ntpEndpoint"`
+	UseImageDatastoreForVms bool                            `json:"useImageDatastoreForVms"`
+	SyslogEndpoint          interface{}                     `json:"syslogEndpoint"`
+	Stats                   *StatsInfo                      `json:"stats"`
+	ImageDatastores         []string                        `json:"imageDatastores"`
+	Auth                    *AuthInfo                       `json:"auth"`
+	NetworkConfiguration    *NetworkConfigurationCreateSpec `json:"networkConfiguration"`
+	LoadBalancerEnabled     bool                            `json:"loadBalancerEnabled"`
+}
+
+// Deployment deploy config.
+type DeploymentDeployOperation struct {
+	DesiredState string `json:"desiredState"`
 }
 
 type MigrationStatus struct {
@@ -459,6 +465,7 @@ type Deployment struct {
 	NTPEndpoint             string                 `json:"ntpEndpoint,omitempty"`
 	UseImageDatastoreForVms bool                   `json:"useImageDatastoreForVms,omitempty"`
 	Auth                    *AuthInfo              `json:"auth"`
+	NetworkConfiguration    *NetworkConfiguration  `json:"networkConfiguration"`
 	Kind                    string                 `json:"kind"`
 	SyslogEndpoint          string                 `json:"syslogEndpoint,omitempty"`
 	Stats                   *StatsInfo             `json:"stats,omitempty"`
@@ -469,11 +476,22 @@ type Deployment struct {
 	Migration               *MigrationStatus       `json:"migrationStatus,omitempty"`
 	ClusterConfigurations   []ClusterConfiguration `json:"clusterConfigurations,omitempty"`
 	LoadBalancerEnabled     bool                   `json:"loadBalancerEnabled"`
+	LoadBalancerAddress     string                 `json:"loadBalancerAddress"`
 }
 
 // Represents multiple deployments returned by the API.
 type Deployments struct {
 	Items []Deployment `json:"items"`
+}
+
+// Represents source load balacer address to migrate deployment
+type InitializeMigrationOperation struct {
+	SourceLoadBalancerAddress string `json:"sourceLoadBalancerAddress"`
+}
+
+// Represents source load balacer address to finish migration of deployment
+type FinalizeMigrationOperation struct {
+	SourceLoadBalancerAddress string `json:"sourceLoadBalancerAddress"`
 }
 
 // Represents stats information
@@ -494,15 +512,39 @@ type AuthInfo struct {
 	Username       string   `json:"username,omitempty"`
 }
 
-// Creation spec for networks.
-type NetworkCreateSpec struct {
+// Represents creation spec for network configuration.
+type NetworkConfigurationCreateSpec struct {
+	Enabled         bool   `json:"sdnEnabled,omitempty"`
+	Address         string `json:"networkManagerAddress,omitempty"`
+	Username        string `json:"networkManagerUsername,omitempty"`
+	Password        string `json:"networkManagerPassword,omitempty"`
+	NetworkZoneId   string `json:"networkZoneId,omitempty"`
+	TopRouterId     string `json:"networkTopRouterId,omitempty"`
+	IpRange         string `json:"ipRange,omitempty"`
+	FloatingIpRange string `json:"floatingIpRange,omitempty"`
+}
+
+// Represents network configuration.
+type NetworkConfiguration struct {
+	Enabled         bool   `json:"sdnEnabled,omitempty"`
+	Address         string `json:"networkManagerAddress,omitempty"`
+	Username        string `json:"networkManagerUsername,omitempty"`
+	Password        string `json:"networkManagerPassword,omitempty"`
+	NetworkZoneId   string `json:"networkZoneId,omitempty"`
+	TopRouterId     string `json:"networkTopRouterId,omitempty"`
+	IpRange         string `json:"ipRange,omitempty"`
+	FloatingIpRange string `json:"floatingIpRange,omitempty"`
+}
+
+// Creation spec for subnets.
+type SubnetCreateSpec struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description,omitempty"`
 	PortGroups  []string `json:"portGroups"`
 }
 
-// Represents a network
-type Network struct {
+// Represents a subnet
+type Subnet struct {
 	Kind        string   `json:"kind"`
 	Name        string   `json:"name"`
 	Description string   `json:"description,omitempty"`
@@ -511,11 +553,12 @@ type Network struct {
 	PortGroups  []string `json:"portGroups"`
 	Tags        []string `json:"tags,omitempty"`
 	SelfLink    string   `json:"selfLink"`
+	IsDefault   bool     `json:"isDefault"`
 }
 
-// Represents multiple networks returned by the API
-type Networks struct {
-	Items []Network `json:"items"`
+// Represents multiple subnets returned by the API
+type Subnets struct {
+	Items []Subnet `json:"items"`
 }
 
 // Creation spec for Cluster Configuration.
@@ -573,7 +616,7 @@ type SecurityGroup struct {
 }
 
 // Represents set_security_groups spec
-type SecurityGroups struct {
+type SecurityGroupsSpec struct {
 	Items []string `json:"items"`
 }
 
@@ -604,4 +647,10 @@ type HostSetAvailabilityZoneOperation struct {
 // Represents the list of image datastores.
 type ImageDatastores struct {
 	Items []string `json:"items"`
+}
+
+// Image creation spec.
+type ImageCreateSpec struct {
+	Name            string `json:"name"`
+	ReplicationType string `json:"replicationType"`
 }
