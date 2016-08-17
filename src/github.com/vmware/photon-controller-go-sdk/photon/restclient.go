@@ -12,7 +12,6 @@ package photon
 import (
 	"crypto/rand"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -78,9 +77,9 @@ func (client *restClient) GetList(endpoint string, url string, token string) (re
 	if err != nil {
 		return
 	}
-	if res.StatusCode != 200 {
-		errMsg := fmt.Sprintf("photon: HTTP %d: %v", res.StatusCode, res.Body)
-		return nil, errors.New(errMsg)
+	res, err = getError(res)
+	if err != nil {
+		return
 	}
 
 	decoder := json.NewDecoder(res.Body)
@@ -101,9 +100,9 @@ func (client *restClient) GetList(endpoint string, url string, token string) (re
 		if err != nil {
 			return
 		}
-		if res.StatusCode != 200 {
-			errMsg := fmt.Sprintf("photon: HTTP %d: %v", res.StatusCode, res.Body)
-			return nil, errors.New(errMsg)
+		res, err = getError(res)
+		if err != nil {
+			return
 		}
 
 		decoder = json.NewDecoder(res.Body)
@@ -144,6 +143,7 @@ func (client *restClient) Delete(url string, token string) (res *http.Response, 
 func (client *restClient) Do(req *request) (res *http.Response, err error) {
 	r, err := http.NewRequest(req.Method, req.URL, req.Body)
 	if err != nil {
+		client.logger.Printf("An error occured creating request %s on %s. Error: %s", req.Method, req.URL, err)
 		return
 	}
 	if req.ContentType != "" {
@@ -158,7 +158,7 @@ func (client *restClient) Do(req *request) (res *http.Response, err error) {
 		return
 	}
 
-	client.logger.Printf("%s %s %s", req.Method, req.URL, res.Status)
+	client.logger.Printf("[%s] %s - %s %s", res.Header.Get("request-id"), res.Status, req.Method, req.URL)
 	return
 }
 

@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	p "path"
+	"path/filepath"
 )
 
 const metadataKey = "bosh-cpi"
@@ -114,8 +115,15 @@ func updateAgentEnv(ctx *cpi.Context, vmID string, env *cpi.AgentEnv) (err error
 		return err
 	}
 
-	ctx.Logger.Infof("Attaching ISO at path: %s", isoPath)
-	attachTask, err := ctx.Client.VMs.AttachISO(vmID, isoPath)
+	file, err := os.Open(isoPath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	isoName := filepath.Base(isoPath)
+
+	ctx.Logger.Infof("Attaching ISO with name: %s at path: %s", isoName, isoPath)
+	attachTask, err := ctx.Client.VMs.AttachISO(vmID, file, isoName)
 	if err != nil {
 		return
 	}
