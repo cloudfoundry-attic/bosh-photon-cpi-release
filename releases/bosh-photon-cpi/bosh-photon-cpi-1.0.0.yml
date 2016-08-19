@@ -1,0 +1,44 @@
+---
+packages:
+- name: cpi
+  version: !binary |-
+    ZmQ4NGUwOGJkZGFiMWE0YTE1NzQxMDBiNjQzNjNmZTYxZjFhMTY0NA==
+  fingerprint: !binary |-
+    ZmQ4NGUwOGJkZGFiMWE0YTE1NzQxMDBiNjQzNjNmZTYxZjFhMTY0NA==
+  sha1: !binary |-
+    Zjk1YjQxZTM1N2Q0NTM3YjFhZmU0NzI4YTFhNTU3M2U4MGMwZGRmYg==
+  dependencies:
+  - cpi_mkisofs
+  - golang_1.6
+- name: cpi_mkisofs
+  version: !binary |-
+    MmZkMzlmM2JhYTJlODYwOTQzYjA1YjcxZjRkY2JhMGFjZmQ5M2YyMw==
+  fingerprint: !binary |-
+    MmZkMzlmM2JhYTJlODYwOTQzYjA1YjcxZjRkY2JhMGFjZmQ5M2YyMw==
+  sha1: 34d186360e50721a70adf5e29f6a0bb3f870d3f8
+  dependencies: []
+- name: golang_1.6
+  version: !binary |-
+    ZTliNTg0NjdlNTlhMGY5ZTE3NzAzYTE4MTZjMmQ2ODVmZDE1NDNjNg==
+  fingerprint: !binary |-
+    ZTliNTg0NjdlNTlhMGY5ZTE3NzAzYTE4MTZjMmQ2ODVmZDE1NDNjNg==
+  sha1: !binary |-
+    NWViOWY5OGY2Zjg2MGU3YTdhYzk3NTgyYjc1YTc5N2Y3M2NhZDQ3Yw==
+  dependencies: []
+jobs:
+- name: cpi
+  version: !binary |-
+    YjA3MWNkNzg1OWE3NWFkYzQ2NzY1NjM5MmQ3YmM4MzQ3NWQ3ZjE1MQ==
+  fingerprint: !binary |-
+    YjA3MWNkNzg1OWE3NWFkYzQ2NzY1NjM5MmQ3YmM4MzQ3NWQ3ZjE1MQ==
+  sha1: 4d5c4573334dcf3083d6df58c3e8b7e19093c2b6
+license:
+  version: !binary |-
+    NzBkNDNhMWUzZDJjODg0MWI5MGI2NjYzYThiMGE5ZDVjMDg5ZGZiNw==
+  fingerprint: !binary |-
+    NzBkNDNhMWUzZDJjODg0MWI5MGI2NjYzYThiMGE5ZDVjMDg5ZGZiNw==
+  sha1: 320214056ff9f100b2414466f04441714146b10a
+commit_hash: bd12b047
+uncommitted_changes: true
+name: bosh-photon-cpi
+version: 1.0.0
