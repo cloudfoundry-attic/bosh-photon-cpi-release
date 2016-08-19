@@ -11,14 +11,6 @@ cpi_mkisofs/smake-1.2.4.tar.bz2:
   object_id: 95662e0d-cb75-4ded-a5e0-4aba5067e3df
   sha: 677af2a1b768d5dfd3bd71dc46f81992e798191b
   size: 426050
-golang_1.4.2/go1.4.2.darwin-amd64-osx10.8.tar.gz:
-  object_id: 5b67bfdf-811b-4ba9-a8c2-5b8aa509344c
-  sha: 58a04b3eb9853c75319d9076df6f3ac8b7430f7f
-  size: 61652688
-golang_1.4.2/go1.4.2.linux-amd64.tar.gz:
-  object_id: cd0fb453-731e-4fbf-a5af-c916499530e0
-  sha: 5020af94b52b65cc9b6f11d50a67e4bae07b0aff
-  size: 62442704
 golang_1.6/go1.6.linux-amd64.tar.gz:
   object_id: c6efe75b-9fe5-44a7-ae0b-2db46252b1de
   sha: !binary |-
