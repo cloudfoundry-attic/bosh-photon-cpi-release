@@ -308,6 +308,13 @@ func HasVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error)
 		if ok && apiErr.HttpStatusCode == http.StatusNotFound {
 			return false, nil
 		}
+
+		if len(ctx.Config.Photon.Username) != 0 && len(ctx.Config.Photon.Password) != 0 {
+			if ok && apiErr.HttpStatusCode == http.StatusForbidden {
+				return false, nil
+			}
+		}
+
 		return nil, err
 	}
 	return true, nil

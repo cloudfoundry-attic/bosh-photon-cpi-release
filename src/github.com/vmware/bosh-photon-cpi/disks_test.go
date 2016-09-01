@@ -315,6 +315,47 @@ var _ = Describe("Disk", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
+		Context("when auth is enabled", func() {
+			var (
+				ctxAuth    *cpi.Context
+			)
+			BeforeEach(func() {
+				ctxAuth = &cpi.Context{
+					Client: ctx.Client,
+					Config: &cpi.Config{
+						Photon: &cpi.PhotonConfig{
+							Target:    ctx.Config.Photon.Target,
+							ProjectID: ctx.Config.Photon.ProjectID,
+							Username:  "fake_username",
+							Password:  "fake_password",
+						},
+						Agent: ctx.Config.Agent,
+					},
+					Runner: ctx.Runner,
+					Logger: ctx.Logger,
+				}
+			})
+
+			It("should return false when disk not found", func() {
+				disk := &ec.PersistentDisk{Flavor: "persistent-disk", ID: "fake-disk-id"}
+
+				RegisterResponder(
+					"GET",
+					server.URL+"/disks/"+disk.ID,
+					CreateResponder(403, ToJson(disk)))
+
+				actions := map[string]cpi.ActionFn{
+					"has_disk": HasDisk,
+				}
+				args := []interface{}{"fake-disk-id"}
+				res, err := GetResponse(dispatch(ctxAuth, actions, "has_disk", args))
+
+				Expect(res.Result).Should(Equal(false))
+				Expect(res.Error).Should(BeNil())
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(res.Log).ShouldNot(BeEmpty())
+			})
+		})
 	})
 
 	Describe("GetDisks", func() {

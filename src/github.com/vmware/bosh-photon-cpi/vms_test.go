@@ -454,6 +454,46 @@ var _ = Describe("VMs", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
+		Context("when auth is enabled", func() {
+			var (
+				ctxAuth    *cpi.Context
+			)
+			BeforeEach(func() {
+				ctxAuth = &cpi.Context{
+					Client: ctx.Client,
+					Config: &cpi.Config{
+						Photon: &cpi.PhotonConfig{
+							Target:    ctx.Config.Photon.Target,
+							ProjectID: ctx.Config.Photon.ProjectID,
+							Username:  "fake_username",
+							Password:  "fake_password",
+						},
+						Agent: ctx.Config.Agent,
+					},
+					Runner: ctx.Runner,
+					Logger: ctx.Logger,
+				}
+			})
+
+			It("should return false when VM not found", func() {
+				vm := &ec.VM{ID: "fake-vm-id"}
+				RegisterResponder(
+					"GET",
+					server.URL+"/vms/"+vm.ID,
+					CreateResponder(403, ToJson(vm)))
+
+				actions := map[string]cpi.ActionFn{
+					"has_vm": HasVM,
+				}
+				args := []interface{}{"fake-vm-id"}
+				res, err := GetResponse(dispatch(ctxAuth, actions, "has_vm", args))
+
+				Expect(res.Result).Should(Equal(false))
+				Expect(res.Error).Should(BeNil())
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(res.Log).ShouldNot(BeEmpty())
+			})
+		})
 	})
 
 	Describe("RestartVM", func() {
