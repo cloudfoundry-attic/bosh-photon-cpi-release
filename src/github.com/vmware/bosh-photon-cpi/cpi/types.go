@@ -51,6 +51,7 @@ const (
 	CpiError            BoshErrorType = "Bosh::Clouds::CpiError"
 	NotImplementedError BoshErrorType = "Bosh::Clouds::NotImplemented"
 	NotSupportedError   BoshErrorType = "Bosh::Clouds::NotSupported"
+	VMNotFoundError     BoshErrorType = "Bosh::Clouds::VMNotFound"
 )
 
 type Request struct {
@@ -99,6 +100,10 @@ func NewBoshError(errorType BoshErrorType, canRetry bool, format string, args ..
 
 func NewCpiError(cause interface{}, format string, args ...interface{}) error {
 	return &boshError{CpiError, false, fmt.Sprintf("CPI error: '%s' | Caused by: '%v'", fmt.Sprintf(format, args...), cause)}
+}
+
+func NewVMNotFoundError(id string) error {
+	return &boshError{VMNotFoundError, false, fmt.Sprintf("VM '%s' not found", id)}
 }
 
 type Network struct {

@@ -25,9 +25,10 @@ import (
 
 var _ = Describe("VMs", func() {
 	var (
-		server *httptest.Server
-		ctx    *cpi.Context
-		projID string
+		server  *httptest.Server
+		ctx     *cpi.Context
+		ctxAuth *cpi.Context
+		projID  string
 	)
 
 	BeforeEach(func() {
@@ -52,6 +53,20 @@ var _ = Describe("VMs", func() {
 			},
 			Runner: runner,
 			Logger: logger.New(),
+		}
+		ctxAuth = &cpi.Context{
+			Client: ctx.Client,
+			Config: &cpi.Config{
+				Photon: &cpi.PhotonConfig{
+					Target:    ctx.Config.Photon.Target,
+					ProjectID: ctx.Config.Photon.ProjectID,
+					Username:  "fake_username",
+					Password:  "fake_password",
+				},
+				Agent: ctx.Config.Agent,
+			},
+			Runner: ctx.Runner,
+			Logger: ctx.Logger,
 		}
 
 		projID = ctx.Config.Photon.ProjectID
@@ -274,6 +289,8 @@ var _ = Describe("VMs", func() {
 
 	Describe("DeleteVM", func() {
 		It("should return nothing when successful", func() {
+			vm := &ec.VM{ID: "fake-vm-id"}
+
 			deleteTask := &ec.Task{Operation: "DELETE_VM", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
 			completedTask := &ec.Task{Operation: "DELETE_VM", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
 
@@ -286,6 +303,10 @@ var _ = Describe("VMs", func() {
 			detachQueuedTask := &ec.Task{Operation: "DETACH_DISK", State: "QUEUED", ID: "fake-disk-task-1", Entity: ec.Entity{ID: "fake-disk-1"}}
 			detachCompletedTask := &ec.Task{Operation: "DETACH_DISK", State: "COMPLETED", ID: "fake-disk-task-1", Entity: ec.Entity{ID: "fake-disk-1"}}
 
+			RegisterResponder(
+				"GET",
+				server.URL+"/vms/"+deleteTask.Entity.ID,
+				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"DELETE",
 				server.URL+"/vms/"+deleteTask.Entity.ID,
@@ -328,16 +349,11 @@ var _ = Describe("VMs", func() {
 		})
 		It("should return an error when VM not found", func() {
 			deleteTask := &ec.Task{Operation: "DELETE_VM", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
-			completedTask := &ec.Task{Operation: "DELETE_VM", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
 
 			RegisterResponder(
-				"DELETE",
-				server.URL+"/vms/"+deleteTask.Entity.ID,
-				CreateResponder(404, ToJson(deleteTask)))
-			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+deleteTask.ID,
-				CreateResponder(200, ToJson(completedTask)))
+				server.URL+"/vms/"+deleteTask.Entity.ID,
+				CreateResponder(404, ToJson(ec.VM{})))
 
 			actions := map[string]cpi.ActionFn{
 				"delete_vm": DeleteVM,
@@ -347,6 +363,7 @@ var _ = Describe("VMs", func() {
 
 			Expect(res.Result).Should(BeNil())
 			Expect(res.Error).ShouldNot(BeNil())
+			Expect(res.Error.Type).Should(Equal(cpi.VMNotFoundError))
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
@@ -373,6 +390,28 @@ var _ = Describe("VMs", func() {
 			Expect(res.Error).ShouldNot(BeNil())
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
+		})
+		Context("when auth is enabled", func() {
+			It("should return an error when VM not found", func() {
+				deleteTask := &ec.Task{Operation: "DELETE_VM", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
+
+				RegisterResponder(
+					"GET",
+					server.URL+"/vms/"+deleteTask.Entity.ID,
+					CreateResponder(403, ToJson(ec.VM{})))
+
+				actions := map[string]cpi.ActionFn{
+					"delete_vm": DeleteVM,
+				}
+				args := []interface{}{"fake-vm-id"}
+				res, err := GetResponse(dispatch(ctxAuth, actions, "delete_vm", args))
+
+				Expect(res.Result).Should(BeNil())
+				Expect(res.Error).ShouldNot(BeNil())
+				Expect(res.Error.Type).Should(Equal(cpi.VMNotFoundError))
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(res.Log).ShouldNot(BeEmpty())
+			})
 		})
 	})
 	Describe("HasVM", func() {
@@ -455,26 +494,6 @@ var _ = Describe("VMs", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		Context("when auth is enabled", func() {
-			var (
-				ctxAuth    *cpi.Context
-			)
-			BeforeEach(func() {
-				ctxAuth = &cpi.Context{
-					Client: ctx.Client,
-					Config: &cpi.Config{
-						Photon: &cpi.PhotonConfig{
-							Target:    ctx.Config.Photon.Target,
-							ProjectID: ctx.Config.Photon.ProjectID,
-							Username:  "fake_username",
-							Password:  "fake_password",
-						},
-						Agent: ctx.Config.Agent,
-					},
-					Runner: ctx.Runner,
-					Logger: ctx.Logger,
-				}
-			})
-
 			It("should return false when VM not found", func() {
 				vm := &ec.VM{ID: "fake-vm-id"}
 				RegisterResponder(

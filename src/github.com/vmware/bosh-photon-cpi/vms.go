@@ -244,6 +244,16 @@ func DeleteVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 
 	ctx.Logger.Infof("Deleting VM: %s", vmCID)
 
+	found, err := findVM(ctx, vmCID)
+	if err != nil {
+		return
+	}
+	if !found {
+		ctx.Logger.Infof("Could not find VM: %s.", vmCID)
+		err = cpi.NewVMNotFoundError(vmCID)
+		return
+	}
+
 	ctx.Logger.Info("Detaching disks")
 	// Detach any attached disks first
 	disks, err := ctx.Client.Projects.GetDisks(ctx.Config.Photon.ProjectID, nil)
@@ -301,23 +311,7 @@ func HasVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error)
 		return nil, errors.New("Unexpected argument where vm_cid should be")
 	}
 
-	ctx.Logger.Infof("Determining if VM exists: %s", vmCID)
-	_, err = ctx.Client.VMs.Get(vmCID)
-	if err != nil {
-		apiErr, ok := err.(ec.ApiError)
-		if ok && apiErr.HttpStatusCode == http.StatusNotFound {
-			return false, nil
-		}
-
-		if len(ctx.Config.Photon.Username) != 0 && len(ctx.Config.Photon.Password) != 0 {
-			if ok && apiErr.HttpStatusCode == http.StatusForbidden {
-				return false, nil
-			}
-		}
-
-		return nil, err
-	}
-	return true, nil
+	return findVM(ctx, vmCID)
 }
 
 func RestartVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error) {
@@ -340,4 +334,24 @@ func RestartVM(ctx *cpi.Context, args []interface{}) (result interface{}, err er
 		return
 	}
 	return nil, nil
+}
+
+func findVM(ctx *cpi.Context, vmCID string) (found bool, err error) {
+	ctx.Logger.Infof("Determining if VM exists: %s", vmCID)
+	_, err = ctx.Client.VMs.Get(vmCID)
+	if err != nil {
+		apiErr, ok := err.(ec.ApiError)
+		if ok && apiErr.HttpStatusCode == http.StatusNotFound {
+			return false, nil
+		}
+
+		if len(ctx.Config.Photon.Username) != 0 && len(ctx.Config.Photon.Password) != 0 {
+			if ok && apiErr.HttpStatusCode == http.StatusForbidden {
+				return false, nil
+			}
+		}
+
+		return false, err
+	}
+	return true, nil
 }
