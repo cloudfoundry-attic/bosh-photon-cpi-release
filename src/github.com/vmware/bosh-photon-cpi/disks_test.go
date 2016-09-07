@@ -75,9 +75,14 @@ var _ = Describe("Disk", func() {
 
 	Describe("CreateDisk", func() {
 		It("returns a disk ID", func() {
+			vm := &ec.VM{ID: "fake-vm-id"}
 			createTask := &ec.Task{Operation: "CREATE_DISK", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
 			completedTask := &ec.Task{Operation: "CREATE_DISK", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
 
+			RegisterResponder(
+				"GET",
+				server.URL+"/vms/"+"fake-vm-id",
+				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"POST",
 				server.URL+"/projects/"+projID+"/disks",
@@ -203,13 +208,11 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("returns an error when apife returns 404", func() {
-			deleteTask := &ec.Task{Operation: "DELETE_DISK", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
 			apiError := ec.ApiError{HttpStatusCode: 404, Code: "DiskNotFound", Message:""}
-
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/disks/"+deleteTask.Entity.ID,
+				server.URL+"/disks/"+"fake-disk-id",
 				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
@@ -258,13 +261,14 @@ var _ = Describe("Disk", func() {
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
-					"has_disk": HasDisk,
+					"delete_disk": DeleteDisk,
 				}
 				args := []interface{}{"fake-disk-id"}
-				res, err := GetResponse(dispatch(ctxAuth, actions, "has_disk", args))
+				res, err := GetResponse(dispatch(ctxAuth, actions, "delete_disk", args))
 
-				Expect(res.Result).Should(Equal(false))
-				Expect(res.Error).Should(BeNil())
+				Expect(res.Result).Should(BeNil())
+				Expect(res.Error).ShouldNot(BeNil())
+				Expect(res.Error.Type).Should(Equal(cpi.DiskNotFoundError))
 				Expect(err).ShouldNot(HaveOccurred())
 				Expect(res.Log).ShouldNot(BeEmpty())
 			})
@@ -388,7 +392,12 @@ var _ = Describe("Disk", func() {
 			}
 			// Disks on vm-2
 			matchedList := []interface{}{"disk-4", "disk-2", "disk-1"}
+			vm := &ec.VM{ID: "vm-2"}
 
+			RegisterResponder(
+				"GET",
+				server.URL+"/vms/"+"vm-2",
+				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
 				server.URL+"/projects/"+projID+"/disks",
@@ -412,7 +421,12 @@ var _ = Describe("Disk", func() {
 				},
 			}
 			matchedList := []interface{}{}
+			vm := &ec.VM{ID: "vm-2"}
 
+			RegisterResponder(
+				"GET",
+				server.URL+"/vms/"+"vm-2",
+				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
 				server.URL+"/projects/"+projID+"/disks",
@@ -448,6 +462,48 @@ var _ = Describe("Disk", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
+		It("returns an error when VM not found", func() {
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message:""}
+
+			RegisterResponder(
+				"GET",
+				server.URL+"/vms/"+"fake-vm-id",
+				CreateResponder(404, ToJson(apiError)))
+
+			actions := map[string]cpi.ActionFn{
+				"get_disks": GetDisks,
+			}
+			args := []interface{}{"fake-vm-id"}
+			res, err := GetResponse(dispatch(ctx, actions, "get_disks", args))
+
+			Expect(res.Result).Should(BeNil())
+			Expect(res.Error).ShouldNot(BeNil())
+			Expect(res.Error.Type).Should(Equal(cpi.VMNotFoundError))
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(res.Log).ShouldNot(BeEmpty())
+		})
+		Context("when auth is enabled", func() {
+			It("returns an error when VM not found", func() {
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+
+				RegisterResponder(
+					"GET",
+					server.URL+"/vms/"+"fake-vm-id",
+					CreateResponder(403, ToJson(apiError)))
+
+				actions := map[string]cpi.ActionFn{
+					"get_disks": GetDisks,
+				}
+				args := []interface{}{"fake-vm-id"}
+				res, err := GetResponse(dispatch(ctxAuth, actions, "get_disks", args))
+
+				Expect(res.Result).Should(BeNil())
+				Expect(res.Error).ShouldNot(BeNil())
+				Expect(res.Error.Type).Should(Equal(cpi.VMNotFoundError))
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(res.Log).ShouldNot(BeEmpty())
+			})
+		})
 	})
 	Describe("AttachDisk", func() {
 		It("returns nothing when attach succeeds", func() {
@@ -465,8 +521,17 @@ var _ = Describe("Disk", func() {
 				ID:       "fake-vm-id",
 				Metadata: map[string]string{"bosh-cpi": GetEnvMetadata(env)},
 			}
+			disk := &ec.PersistentDisk{ID: "fake-disk-id"}
 			metadataTask := &ec.Task{State: "COMPLETED"}
 
+			RegisterResponder(
+				"GET",
+				server.URL+"/vms/"+"fake-vm-id",
+				CreateResponder(200, ToJson(vm)))
+			RegisterResponder(
+				"GET",
+				server.URL+"/disks/"+"fake-disk-id",
+				CreateResponder(200, ToJson(disk)))
 			RegisterResponder(
 				"POST",
 				server.URL+"/vms/fake-vm-id/attach_disk",
@@ -513,18 +578,12 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("returns an error when VM not found", func() {
-			attachTask := &ec.Task{Operation: "ATTACH_DISK", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
-			completedTask := &ec.Task{Operation: "ATTACH_DISK", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
-
-			RegisterResponder(
-				"POST",
-				server.URL+"/vms/fake-vm-id/attach_disk",
-				CreateResponder(404, ToJson(attachTask)))
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message:""}
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+attachTask.ID,
-				CreateResponder(200, ToJson(completedTask)))
+				server.URL+"/vms/"+"fake-vm-id",
+				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
 				"attach_disk": AttachDisk,
@@ -534,8 +593,81 @@ var _ = Describe("Disk", func() {
 
 			Expect(res.Result).Should(BeNil())
 			Expect(res.Error).ShouldNot(BeNil())
+			Expect(res.Error.Type).Should(Equal(cpi.VMNotFoundError))
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
+		})
+		It("returns an error when disk not found", func() {
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "DiskNotFound", Message:""}
+			vm := &ec.VM{ID: "fake-vm-id"}
+
+			RegisterResponder(
+				"GET",
+				server.URL+"/vms/"+"fake-vm-id",
+				CreateResponder(200, ToJson(vm)))
+			RegisterResponder(
+				"GET",
+				server.URL+"/disks/"+"fake-disk-id",
+				CreateResponder(404, ToJson(apiError)))
+
+			actions := map[string]cpi.ActionFn{
+				"attach_disk": AttachDisk,
+			}
+			args := []interface{}{"fake-vm-id", "fake-disk-id"}
+			res, err := GetResponse(dispatch(ctx, actions, "attach_disk", args))
+
+			Expect(res.Result).Should(BeNil())
+			Expect(res.Error).ShouldNot(BeNil())
+			Expect(res.Error.Type).Should(Equal(cpi.DiskNotFoundError))
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(res.Log).ShouldNot(BeEmpty())
+		})
+		Context("when auth is enabled", func() {
+			It("returns an error when VM not found", func() {
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+
+				RegisterResponder(
+					"GET",
+					server.URL+"/vms/"+"fake-vm-id",
+					CreateResponder(403, ToJson(apiError)))
+
+				actions := map[string]cpi.ActionFn{
+					"attach_disk": AttachDisk,
+				}
+				args := []interface{}{"fake-vm-id", "fake-disk-id"}
+				res, err := GetResponse(dispatch(ctxAuth, actions, "attach_disk", args))
+
+				Expect(res.Result).Should(BeNil())
+				Expect(res.Error).ShouldNot(BeNil())
+				Expect(res.Error.Type).Should(Equal(cpi.VMNotFoundError))
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(res.Log).ShouldNot(BeEmpty())
+			})
+			It("returns an error when disk not found", func() {
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+				vm := &ec.VM{ID: "fake-vm-id"}
+
+				RegisterResponder(
+					"GET",
+					server.URL+"/vms/"+"fake-vm-id",
+					CreateResponder(200, ToJson(vm)))
+				RegisterResponder(
+					"GET",
+					server.URL+"/disks/"+"fake-disk-id",
+					CreateResponder(403, ToJson(apiError)))
+
+				actions := map[string]cpi.ActionFn{
+					"attach_disk": AttachDisk,
+				}
+				args := []interface{}{"fake-vm-id", "fake-disk-id"}
+				res, err := GetResponse(dispatch(ctxAuth, actions, "attach_disk", args))
+
+				Expect(res.Result).Should(BeNil())
+				Expect(res.Error).ShouldNot(BeNil())
+				Expect(res.Error.Type).Should(Equal(cpi.DiskNotFoundError))
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(res.Log).ShouldNot(BeEmpty())
+			})
 		})
 	})
 	Describe("DetachDisk", func() {
@@ -560,6 +692,10 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
+				server.URL+"/vms/fake-vm-id",
+				CreateResponder(200, ToJson(vm)))
+			RegisterResponder(
+				"GET",
 				server.URL+"/disks/"+disk.ID,
 				CreateResponder(200, ToJson(disk)))
 			RegisterResponder(
@@ -578,10 +714,6 @@ var _ = Describe("Disk", func() {
 				"POST",
 				server.URL+"/vms/fake-vm-id/set_metadata",
 				CreateResponder(200, ToJson(metadataTask)))
-			RegisterResponder(
-				"GET",
-				server.URL+"/vms/fake-vm-id",
-				CreateResponder(200, ToJson(vm)))
 
 			RegisterResponder(
 				"GET",
@@ -608,33 +740,33 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("returns an error when VM not found", func() {
-			attachTask := &ec.Task{Operation: "DETACH_DISK", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
-			completedTask := &ec.Task{Operation: "DETACH_DISK", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
-
-			RegisterResponder(
-				"POST",
-				server.URL+"/vms/fake-vm-id/detach_disk",
-				CreateResponder(404, ToJson(attachTask)))
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message:""}
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+attachTask.ID,
-				CreateResponder(200, ToJson(completedTask)))
+				server.URL+"/vms/"+"fake-vm-id",
+				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
-				"attach_disk": DetachDisk,
+				"detach_disk": DetachDisk,
 			}
 			args := []interface{}{"fake-vm-id", "fake-disk-id"}
-			res, err := GetResponse(dispatch(ctx, actions, "attach_disk", args))
+			res, err := GetResponse(dispatch(ctx, actions, "detach_disk", args))
 
 			Expect(res.Result).Should(BeNil())
 			Expect(res.Error).ShouldNot(BeNil())
+			Expect(res.Error.Type).Should(Equal(cpi.VMNotFoundError))
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("returns error when disk not found", func() {
 			apiError := ec.ApiError{HttpStatusCode: 404, Code: "DiskNotFound", Message:""}
+			vm := &ec.VM{ID: "fake-vm-id"}
 
+			RegisterResponder(
+				"GET",
+				server.URL+"/vms/"+"fake-vm-id",
+				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
 				server.URL+"/disks/"+"fake-disk-id",
@@ -653,8 +785,13 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("returns error when disk is not attached to vm", func() {
+			vm := &ec.VM{ID: "fake-vm-id"}
 			disk := &ec.PersistentDisk{ID: "fake-disk-id", VMs: []string{"fake-vm-id-2"}}
 
+			RegisterResponder(
+				"GET",
+				server.URL+"/vms/"+"fake-vm-id",
+				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
 				server.URL+"/disks/"+"fake-disk-id",
@@ -673,9 +810,34 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		Context("when auth is enabled", func() {
-			It("should return error when disk not found", func() {
+			It("returns an error when VM not found", func() {
 				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
 
+				RegisterResponder(
+					"GET",
+					server.URL+"/vms/"+"fake-vm-id",
+					CreateResponder(403, ToJson(apiError)))
+
+				actions := map[string]cpi.ActionFn{
+					"detach_disk": DetachDisk,
+				}
+				args := []interface{}{"fake-vm-id", "fake-disk-id"}
+				res, err := GetResponse(dispatch(ctxAuth, actions, "detach_disk", args))
+
+				Expect(res.Result).Should(BeNil())
+				Expect(res.Error).ShouldNot(BeNil())
+				Expect(res.Error.Type).Should(Equal(cpi.VMNotFoundError))
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(res.Log).ShouldNot(BeEmpty())
+			})
+			It("should return error when disk not found", func() {
+				vm := &ec.VM{ID: "fake-vm-id"}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+
+				RegisterResponder(
+					"GET",
+					server.URL+"/vms/"+"fake-vm-id",
+					CreateResponder(200, ToJson(vm)))
 				RegisterResponder(
 					"GET",
 					server.URL+"/disks/"+"fake-disk-id",

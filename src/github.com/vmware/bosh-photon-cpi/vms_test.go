@@ -348,12 +348,12 @@ var _ = Describe("VMs", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("should return an error when VM not found", func() {
-			deleteTask := &ec.Task{Operation: "DELETE_VM", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message:""}
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+deleteTask.Entity.ID,
-				CreateResponder(404, ToJson(ec.VM{})))
+				server.URL+"/vms/"+"fake-vm-id",
+				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
 				"delete_vm": DeleteVM,
@@ -393,12 +393,12 @@ var _ = Describe("VMs", func() {
 		})
 		Context("when auth is enabled", func() {
 			It("should return an error when VM not found", func() {
-				deleteTask := &ec.Task{Operation: "DELETE_VM", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/vms/"+deleteTask.Entity.ID,
-					CreateResponder(403, ToJson(ec.VM{})))
+					server.URL+"/vms/"+"fake-vm-id",
+					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
 					"delete_vm": DeleteVM,
@@ -495,11 +495,12 @@ var _ = Describe("VMs", func() {
 		})
 		Context("when auth is enabled", func() {
 			It("should return false when VM not found", func() {
-				vm := &ec.VM{ID: "fake-vm-id"}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+
 				RegisterResponder(
 					"GET",
-					server.URL+"/vms/"+vm.ID,
-					CreateResponder(403, ToJson(vm)))
+					server.URL+"/vms/"+"fake-vm-id",
+					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
 					"has_vm": HasVM,
@@ -519,7 +520,12 @@ var _ = Describe("VMs", func() {
 		It("should return nothing when successful", func() {
 			restartTask := &ec.Task{Operation: "restart_vm", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
 			completedTask := &ec.Task{Operation: "restart_vm", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
+			vm := &ec.VM{ID: "fake-vm-id"}
 
+			RegisterResponder(
+				"GET",
+				server.URL+"/vms/"+restartTask.Entity.ID,
+				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"POST",
 				server.URL+"/vms/"+restartTask.Entity.ID+"/restart",
@@ -541,17 +547,12 @@ var _ = Describe("VMs", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("should return an error when VM not found", func() {
-			restartTask := &ec.Task{Operation: "restart_vm", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
-			completedTask := &ec.Task{Operation: "restart_vm", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message:""}
 
 			RegisterResponder(
-				"POST",
-				server.URL+"/vms/"+restartTask.Entity.ID+"/operations",
-				CreateResponder(404, ToJson(restartTask)))
-			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+restartTask.ID,
-				CreateResponder(200, ToJson(completedTask)))
+				server.URL+"/vms/"+"fake-vm-id",
+				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
 				"restart_vm": RestartVM,
@@ -561,6 +562,7 @@ var _ = Describe("VMs", func() {
 
 			Expect(res.Result).Should(BeNil())
 			Expect(res.Error).ShouldNot(BeNil())
+			Expect(res.Error.Type).Should(Equal(cpi.VMNotFoundError))
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
@@ -587,6 +589,28 @@ var _ = Describe("VMs", func() {
 			Expect(res.Error).ShouldNot(BeNil())
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
+		})
+		Context("when auth is enabled", func() {
+			It("should return an error when VM not found", func() {
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+
+				RegisterResponder(
+					"GET",
+					server.URL+"/vms/"+"fake-vm-id",
+					CreateResponder(403, ToJson(apiError)))
+
+				actions := map[string]cpi.ActionFn{
+					"restart_vm": RestartVM,
+				}
+				args := []interface{}{"fake-vm-id"}
+				res, err := GetResponse(dispatch(ctxAuth, actions, "restart_vm", args))
+
+				Expect(res.Result).Should(BeNil())
+				Expect(res.Error).ShouldNot(BeNil())
+				Expect(res.Error.Type).Should(Equal(cpi.VMNotFoundError))
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(res.Log).ShouldNot(BeEmpty())
+			})
 		})
 	})
 })

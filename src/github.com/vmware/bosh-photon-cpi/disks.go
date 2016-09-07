@@ -121,6 +121,11 @@ func GetDisks(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 
 	ctx.Logger.Infof("GetDisks with vm_cid: '%s'", vmCID)
 
+	_, err = ensureVMExists(ctx, vmCID)
+	if err != nil {
+		return
+	}
+
 	disks, err := ctx.Client.Projects.GetDisks(ctx.Config.Photon.ProjectID, nil)
 	if err != nil {
 		return
@@ -151,6 +156,16 @@ func AttachDisk(ctx *cpi.Context, args []interface{}) (result interface{}, err e
 	}
 
 	ctx.Logger.Infof("AttachDisk with vm_cid: '%s', disk_cid: '%s'", vmCID, diskCID)
+
+	_, err = ensureVMExists(ctx, vmCID)
+	if err != nil {
+		return
+	}
+
+	_, err = ensureDiskExists(ctx, diskCID)
+	if err != nil {
+		return
+	}
 
 	ctx.Logger.Info("Attaching disk")
 	op := &ec.VmDiskOperation{DiskID: diskCID}
@@ -211,6 +226,11 @@ func DetachDisk(ctx *cpi.Context, args []interface{}) (result interface{}, err e
 	}
 
 	ctx.Logger.Infof("DetachDisk with vm_cid: '%s', disk_cid: '%s'", vmCID, diskCID)
+
+	_, err = ensureVMExists(ctx, vmCID)
+	if err != nil {
+		return
+	}
 
 	disk, err := ensureDiskExists(ctx, diskCID)
 	if err != nil {
