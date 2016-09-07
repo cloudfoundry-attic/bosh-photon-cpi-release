@@ -394,11 +394,12 @@ var _ = Describe("VMs", func() {
 		Context("when auth is enabled", func() {
 			It("should return an error when VM not found", func() {
 				deleteTask := &ec.Task{Operation: "DELETE_VM", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
 
 				RegisterResponder(
 					"GET",
 					server.URL+"/vms/"+deleteTask.Entity.ID,
-					CreateResponder(403, ToJson(ec.VM{})))
+					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
 					"delete_vm": DeleteVM,
@@ -495,11 +496,12 @@ var _ = Describe("VMs", func() {
 		})
 		Context("when auth is enabled", func() {
 			It("should return false when VM not found", func() {
-				vm := &ec.VM{ID: "fake-vm-id"}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+
 				RegisterResponder(
 					"GET",
-					server.URL+"/vms/"+vm.ID,
-					CreateResponder(403, ToJson(vm)))
+					server.URL+"/vms/"+"fake-vm-id",
+					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
 					"has_vm": HasVM,
