@@ -78,6 +78,11 @@ func DeleteDisk(ctx *cpi.Context, args []interface{}) (result interface{}, err e
 
 	ctx.Logger.Infof("DeleteDisk with disk_cid: '%s'", diskCID)
 
+	_, err = ensureDiskExists(ctx, diskCID)
+	if err != nil {
+		return
+	}
+
 	ctx.Logger.Info("Deleting disk")
 	task, err := ctx.Client.Disks.Delete(diskCID)
 	if err != nil {
@@ -101,24 +106,8 @@ func HasDisk(ctx *cpi.Context, args []interface{}) (result interface{}, err erro
 		return nil, errors.New("Unexpected argument where disk_cid should be")
 	}
 
-	ctx.Logger.Infof("HasDisk with disk_cid: '%s'", diskCID)
-
-	_, err = ctx.Client.Disks.Get(diskCID)
-	if err != nil {
-		apiErr, ok := err.(ec.ApiError)
-		if ok && apiErr.HttpStatusCode == http.StatusNotFound {
-			return false, nil
-		}
-
-		if len(ctx.Config.Photon.Username) != 0 && len(ctx.Config.Photon.Password) != 0 {
-			if ok && apiErr.HttpStatusCode == http.StatusForbidden {
-				return false, nil
-			}
-		}
-
-		return nil, err
-	}
-	return true, nil
+	_, found, err := hasDisk(ctx, diskCID)
+	return found, err
 }
 
 func GetDisks(ctx *cpi.Context, args []interface{}) (result interface{}, err error) {
@@ -223,6 +212,16 @@ func DetachDisk(ctx *cpi.Context, args []interface{}) (result interface{}, err e
 
 	ctx.Logger.Infof("DetachDisk with vm_cid: '%s', disk_cid: '%s'", vmCID, diskCID)
 
+	disk, err := ensureDiskExists(ctx, diskCID)
+	if err != nil {
+		return
+	}
+
+	err = ensureDiskAttachedToVM(ctx, disk, vmCID)
+	if err != nil {
+		return
+	}
+
 	ctx.Logger.Info("Detaching disk")
 	op := &ec.VmDiskOperation{DiskID: diskCID}
 	task, err := ctx.Client.VMs.DetachDisk(vmCID, op)
@@ -257,4 +256,55 @@ func DetachDisk(ctx *cpi.Context, args []interface{}) (result interface{}, err e
 
 func toGB(mb float64) int {
 	return int(math.Ceil(mb / 1000.0))
+}
+
+func hasDisk(ctx *cpi.Context, diskCID string) (disk *ec.PersistentDisk, found bool, err error) {
+	ctx.Logger.Infof("Determining if disk exists: %s", diskCID)
+	disk, err = ctx.Client.Disks.Get(diskCID)
+	if err != nil {
+		apiErr, ok := err.(ec.ApiError)
+		if ok && apiErr.HttpStatusCode == http.StatusNotFound {
+			return nil, false, nil
+		}
+
+		if len(ctx.Config.Photon.Username) != 0 && len(ctx.Config.Photon.Password) != 0 {
+			if ok && apiErr.HttpStatusCode == http.StatusForbidden && apiErr.Code == "AccessForbidden" {
+				return nil, false, nil
+			}
+		}
+
+		return nil, false, err
+	}
+	return disk, true, nil
+}
+
+func ensureDiskExists(ctx *cpi.Context, diskCID string) (disk *ec.PersistentDisk, err error) {
+	disk, found, err := hasDisk(ctx, diskCID)
+	if err != nil {
+		return
+	}
+	if !found {
+		ctx.Logger.Infof("Could not find Disk: %s.", diskCID)
+		err = cpi.NewDiskNotFoundError(diskCID, false)
+		return
+	}
+	return disk, nil
+}
+
+func ensureDiskAttachedToVM(ctx *cpi.Context, disk *ec.PersistentDisk, vmCID string) (err error) {
+	if disk == nil {
+		return errors.New("Error occurred checking whether disk is attached to vm: null disk object")
+	}
+
+	ctx.Logger.Infof("Determining if disk '%s' is attached to VM '%s'", disk.ID, vmCID)
+
+	for _, vmID := range disk.VMs {
+		if vmID == vmCID {
+			return nil
+		}
+	}
+
+	ctx.Logger.Infof("Disk '%s' not attached to VM '%s'.", disk.ID, vmCID)
+	err = cpi.NewDiskNotAttachedError(disk.ID, vmCID, false)
+	return
 }

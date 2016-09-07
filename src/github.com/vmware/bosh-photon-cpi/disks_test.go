@@ -24,9 +24,10 @@ import (
 
 var _ = Describe("Disk", func() {
 	var (
-		server *httptest.Server
-		ctx    *cpi.Context
-		projID string
+		server  *httptest.Server
+		ctx     *cpi.Context
+		ctxAuth *cpi.Context
+		projID  string
 	)
 
 	BeforeEach(func() {
@@ -50,6 +51,19 @@ var _ = Describe("Disk", func() {
 			},
 			Runner: runner,
 			Logger: logger.New(),
+		}
+		ctxAuth = &cpi.Context{
+			Client: ctx.Client,
+			Config: &cpi.Config{
+				Photon: &cpi.PhotonConfig{
+					Target:    ctx.Config.Photon.Target,
+					ProjectID: ctx.Config.Photon.ProjectID,
+					Username:  "fake_username",
+					Password:  "fake_password",
+				},
+			},
+			Runner: ctx.Runner,
+			Logger: ctx.Logger,
 		}
 
 		projID = ctx.Config.Photon.ProjectID
@@ -160,9 +174,14 @@ var _ = Describe("Disk", func() {
 
 	Describe("DeleteDisk", func() {
 		It("returns nothing", func() {
+			disk := &ec.PersistentDisk{ID: "fake_disk-id"}
 			deleteTask := &ec.Task{Operation: "DELETE_DISK", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
 			completedTask := &ec.Task{Operation: "DELETE_DISK", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
 
+			RegisterResponder(
+				"GET",
+				server.URL+"/disks/"+deleteTask.Entity.ID,
+				CreateResponder(200, ToJson(disk)))
 			RegisterResponder(
 				"DELETE",
 				server.URL+"/disks/"+deleteTask.Entity.ID,
@@ -185,16 +204,13 @@ var _ = Describe("Disk", func() {
 		})
 		It("returns an error when apife returns 404", func() {
 			deleteTask := &ec.Task{Operation: "DELETE_DISK", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
-			completedTask := &ec.Task{Operation: "DELETE_DISK", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "DiskNotFound", Message:""}
+
 
 			RegisterResponder(
-				"DELETE",
-				server.URL+"/disks/"+deleteTask.Entity.ID,
-				CreateResponder(404, ToJson(deleteTask)))
-			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+deleteTask.ID,
-				CreateResponder(200, ToJson(completedTask)))
+				server.URL+"/disks/"+deleteTask.Entity.ID,
+				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
 				"delete_disk": DeleteDisk,
@@ -204,6 +220,7 @@ var _ = Describe("Disk", func() {
 
 			Expect(res.Result).Should(BeNil())
 			Expect(res.Error).ShouldNot(BeNil())
+			Expect(res.Error.Type).Should(Equal(cpi.DiskNotFoundError))
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
@@ -230,6 +247,27 @@ var _ = Describe("Disk", func() {
 			Expect(res.Error).ShouldNot(BeNil())
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
+		})
+		Context("when auth is enabled", func() {
+			It("should return false when disk not found", func() {
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+
+				RegisterResponder(
+					"GET",
+					server.URL+"/disks/"+"fake-disk-id",
+					CreateResponder(403, ToJson(apiError)))
+
+				actions := map[string]cpi.ActionFn{
+					"has_disk": HasDisk,
+				}
+				args := []interface{}{"fake-disk-id"}
+				res, err := GetResponse(dispatch(ctxAuth, actions, "has_disk", args))
+
+				Expect(res.Result).Should(Equal(false))
+				Expect(res.Error).Should(BeNil())
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(res.Log).ShouldNot(BeEmpty())
+			})
 		})
 	})
 
@@ -316,33 +354,13 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		Context("when auth is enabled", func() {
-			var (
-				ctxAuth    *cpi.Context
-			)
-			BeforeEach(func() {
-				ctxAuth = &cpi.Context{
-					Client: ctx.Client,
-					Config: &cpi.Config{
-						Photon: &cpi.PhotonConfig{
-							Target:    ctx.Config.Photon.Target,
-							ProjectID: ctx.Config.Photon.ProjectID,
-							Username:  "fake_username",
-							Password:  "fake_password",
-						},
-						Agent: ctx.Config.Agent,
-					},
-					Runner: ctx.Runner,
-					Logger: ctx.Logger,
-				}
-			})
-
 			It("should return false when disk not found", func() {
-				disk := &ec.PersistentDisk{Flavor: "persistent-disk", ID: "fake-disk-id"}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/disks/"+disk.ID,
-					CreateResponder(403, ToJson(disk)))
+					server.URL+"/disks/"+"fake-disk-id",
+					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
 					"has_disk": HasDisk,
@@ -522,6 +540,8 @@ var _ = Describe("Disk", func() {
 	})
 	Describe("DetachDisk", func() {
 		It("returns nothing when detach succeeds", func() {
+			disk := &ec.PersistentDisk{Flavor: "persistent-disk", ID: "fake-disk-id", VMs:[]string{"fake-vm-id"}}
+
 			attachTask := &ec.Task{Operation: "DETACH_DISK", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
 			completedTask := &ec.Task{Operation: "DETACH_DISK", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
 
@@ -538,6 +558,10 @@ var _ = Describe("Disk", func() {
 			}
 			metadataTask := &ec.Task{State: "COMPLETED"}
 
+			RegisterResponder(
+				"GET",
+				server.URL+"/disks/"+disk.ID,
+				CreateResponder(200, ToJson(disk)))
 			RegisterResponder(
 				"POST",
 				server.URL+"/vms/fake-vm-id/detach_disk",
@@ -607,6 +631,68 @@ var _ = Describe("Disk", func() {
 			Expect(res.Error).ShouldNot(BeNil())
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res.Log).ShouldNot(BeEmpty())
+		})
+		It("returns error when disk not found", func() {
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "DiskNotFound", Message:""}
+
+			RegisterResponder(
+				"GET",
+				server.URL+"/disks/"+"fake-disk-id",
+				CreateResponder(404, ToJson(apiError)))
+
+			actions := map[string]cpi.ActionFn{
+				"detach_disk": DetachDisk,
+			}
+			args := []interface{}{"fake-vm-id", "fake-disk-id"}
+			res, err := GetResponse(dispatch(ctx, actions, "detach_disk", args))
+
+			Expect(res.Result).Should(BeNil())
+			Expect(res.Error).ShouldNot(BeNil())
+			Expect(res.Error.Type).Should(Equal(cpi.DiskNotFoundError))
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(res.Log).ShouldNot(BeEmpty())
+		})
+		It("returns error when disk is not attached to vm", func() {
+			disk := &ec.PersistentDisk{ID: "fake-disk-id", VMs: []string{"fake-vm-id-2"}}
+
+			RegisterResponder(
+				"GET",
+				server.URL+"/disks/"+"fake-disk-id",
+				CreateResponder(200, ToJson(disk)))
+
+			actions := map[string]cpi.ActionFn{
+				"detach_disk": DetachDisk,
+			}
+			args := []interface{}{"fake-vm-id", "fake-disk-id"}
+			res, err := GetResponse(dispatch(ctx, actions, "detach_disk", args))
+
+			Expect(res.Result).Should(BeNil())
+			Expect(res.Error).ShouldNot(BeNil())
+			Expect(res.Error.Type).Should(Equal(cpi.DiskNotAttachedError))
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(res.Log).ShouldNot(BeEmpty())
+		})
+		Context("when auth is enabled", func() {
+			It("should return error when disk not found", func() {
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+
+				RegisterResponder(
+					"GET",
+					server.URL+"/disks/"+"fake-disk-id",
+					CreateResponder(403, ToJson(apiError)))
+
+				actions := map[string]cpi.ActionFn{
+					"detach_disk": DetachDisk,
+				}
+				args := []interface{}{"fake-vm-id", "fake-disk-id"}
+				res, err := GetResponse(dispatch(ctxAuth, actions, "detach_disk", args))
+
+				Expect(res.Result).Should(BeNil())
+				Expect(res.Error).ShouldNot(BeNil())
+				Expect(res.Error.Type).Should(Equal(cpi.DiskNotFoundError))
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(res.Log).ShouldNot(BeEmpty())
+			})
 		})
 	})
 })

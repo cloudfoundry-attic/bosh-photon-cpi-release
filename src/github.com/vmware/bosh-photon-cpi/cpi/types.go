@@ -47,11 +47,13 @@ type ActionFn func(*Context, []interface{}) (interface{}, error)
 type BoshErrorType string
 
 const (
-	CloudError          BoshErrorType = "Bosh::Clouds::CloudError"
-	CpiError            BoshErrorType = "Bosh::Clouds::CpiError"
-	NotImplementedError BoshErrorType = "Bosh::Clouds::NotImplemented"
-	NotSupportedError   BoshErrorType = "Bosh::Clouds::NotSupported"
-	VMNotFoundError     BoshErrorType = "Bosh::Clouds::VMNotFound"
+	CloudError           BoshErrorType = "Bosh::Clouds::CloudError"
+	CpiError             BoshErrorType = "Bosh::Clouds::CpiError"
+	NotImplementedError  BoshErrorType = "Bosh::Clouds::NotImplemented"
+	NotSupportedError    BoshErrorType = "Bosh::Clouds::NotSupported"
+	VMNotFoundError      BoshErrorType = "Bosh::Clouds::VMNotFound"
+	DiskNotFoundError    BoshErrorType = "Bosh::Clouds::DiskNotFound"
+	DiskNotAttachedError BoshErrorType = "Bosh::Clouds::DiskNotAttached"
 )
 
 type Request struct {
@@ -104,6 +106,14 @@ func NewCpiError(cause interface{}, format string, args ...interface{}) error {
 
 func NewVMNotFoundError(id string) error {
 	return &boshError{VMNotFoundError, false, fmt.Sprintf("VM '%s' not found", id)}
+}
+
+func NewDiskNotFoundError(id string, retriable bool) error {
+	return &boshError{DiskNotFoundError, retriable, fmt.Sprintf("Disk '%s' not found", id)}
+}
+
+func NewDiskNotAttachedError(diskId string, vmId string, retriable bool) error {
+	return &boshError{DiskNotAttachedError, retriable, fmt.Sprintf("Disk '%s' not attached to VM '%s'", diskId, vmId)}
 }
 
 type Network struct {
