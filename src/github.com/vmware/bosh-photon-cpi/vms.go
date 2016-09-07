@@ -135,8 +135,17 @@ func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 	}
 
 	ctx.Logger.Infof(
-		"CreateVM with agent_id: '%v', stemcell_cid: '%v', cloud_properties: '%v', networks: '%v', env: '%v'",
-		agentID, stemcellCID, cloudProps, networkList, env)
+		"CreateVM with agent_id: '%v', stemcell_cid: '%v', cloud_properties: '%v', networks: '%v', env: '%v', affiniteis: '%v'",
+		agentID, stemcellCID, cloudProps, networkList, env, affinities)
+
+	for _, localitySpec := range affinities {
+	     	if localitySpec.Kind == "disk" {
+			_, err = ensureDiskExists(ctx, localitySpec.ID)
+			if err != nil {
+				return
+			}
+		}
+	}
 
 	ephDiskName := "bosh-ephemeral-disk"
 	spec := &ec.VmCreateSpec{
@@ -244,13 +253,8 @@ func DeleteVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 
 	ctx.Logger.Infof("Deleting VM: %s", vmCID)
 
-	found, err := findVM(ctx, vmCID)
+	_, err = ensureVMExists(ctx, vmCID)
 	if err != nil {
-		return
-	}
-	if !found {
-		ctx.Logger.Infof("Could not find VM: %s.", vmCID)
-		err = cpi.NewVMNotFoundError(vmCID)
 		return
 	}
 
@@ -311,7 +315,8 @@ func HasVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error)
 		return nil, errors.New("Unexpected argument where vm_cid should be")
 	}
 
-	return findVM(ctx, vmCID)
+	_, found, err := hasVM(ctx, vmCID)
+	return found, err
 }
 
 func RestartVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error) {
@@ -321,6 +326,11 @@ func RestartVM(ctx *cpi.Context, args []interface{}) (result interface{}, err er
 	vmCID, ok := args[0].(string)
 	if !ok {
 		return nil, errors.New("Unexpected argument where vm_cid should be")
+	}
+
+	_, err = ensureVMExists(ctx, vmCID)
+	if err != nil {
+		return
 	}
 
 	ctx.Logger.Infof("Restarting VM: %s", vmCID)
@@ -336,22 +346,35 @@ func RestartVM(ctx *cpi.Context, args []interface{}) (result interface{}, err er
 	return nil, nil
 }
 
-func findVM(ctx *cpi.Context, vmCID string) (found bool, err error) {
+func hasVM(ctx *cpi.Context, vmCID string) (vm *ec.VM, found bool, err error) {
 	ctx.Logger.Infof("Determining if VM exists: %s", vmCID)
-	_, err = ctx.Client.VMs.Get(vmCID)
+	vm, err = ctx.Client.VMs.Get(vmCID)
 	if err != nil {
 		apiErr, ok := err.(ec.ApiError)
 		if ok && apiErr.HttpStatusCode == http.StatusNotFound {
-			return false, nil
+			return nil, false, nil
 		}
 
 		if len(ctx.Config.Photon.Username) != 0 && len(ctx.Config.Photon.Password) != 0 {
-			if ok && apiErr.HttpStatusCode == http.StatusForbidden {
-				return false, nil
+			if ok && apiErr.HttpStatusCode == http.StatusForbidden && apiErr.Code == "AccessForbidden" {
+				return nil, false, nil
 			}
 		}
 
-		return false, err
+		return nil, false, err
 	}
-	return true, nil
+	return vm, true, nil
+}
+
+func ensureVMExists(ctx *cpi.Context, vmCID string) (vm *ec.VM, err error) {
+	vm, found, err := hasVM(ctx, vmCID)
+	if err != nil {
+		return
+	}
+	if !found {
+		ctx.Logger.Infof("Could not find VM: %s.", vmCID)
+		err = cpi.NewVMNotFoundError(vmCID)
+		return
+	}
+	return vm, nil
 }
