@@ -518,8 +518,8 @@ var _ = Describe("VMs", func() {
 
 	Describe("RestartVM", func() {
 		It("should return nothing when successful", func() {
-			restartTask := &ec.Task{Operation: "restart_vm", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
-			completedTask := &ec.Task{Operation: "restart_vm", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
+			restartTask := &ec.Task{Operation: "start_vm", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
+			completedTask := &ec.Task{Operation: "start_vm", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-vm-id"}}
 			vm := &ec.VM{ID: "fake-vm-id"}
 
 			RegisterResponder(
@@ -528,7 +528,7 @@ var _ = Describe("VMs", func() {
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/"+restartTask.Entity.ID+"/restart",
+				server.URL+"/vms/"+restartTask.Entity.ID+"/start",
 				CreateResponder(200, ToJson(restartTask)))
 			RegisterResponder(
 				"GET",
@@ -536,10 +536,10 @@ var _ = Describe("VMs", func() {
 				CreateResponder(200, ToJson(completedTask)))
 
 			actions := map[string]cpi.ActionFn{
-				"restart_vm": RestartVM,
+				"reboot_vm": RestartVM,
 			}
 			args := []interface{}{"fake-vm-id"}
-			res, err := GetResponse(dispatch(ctx, actions, "restart_vm", args))
+			res, err := GetResponse(dispatch(ctx, actions, "reboot_vm", args))
 
 			Expect(res.Result).Should(BeNil())
 			Expect(res.Error).Should(BeNil())
@@ -555,10 +555,10 @@ var _ = Describe("VMs", func() {
 				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
-				"restart_vm": RestartVM,
+				"reboot_vm": RestartVM,
 			}
 			args := []interface{}{"fake-vm-id"}
-			res, err := GetResponse(dispatch(ctx, actions, "restart_vm", args))
+			res, err := GetResponse(dispatch(ctx, actions, "reboot_vm", args))
 
 			Expect(res.Result).Should(BeNil())
 			Expect(res.Error).ShouldNot(BeNil())
@@ -568,10 +568,10 @@ var _ = Describe("VMs", func() {
 		})
 		It("should return an error when given no arguments", func() {
 			actions := map[string]cpi.ActionFn{
-				"restart_vm": RestartVM,
+				"reboot_vm": RestartVM,
 			}
 			args := []interface{}{}
-			res, err := GetResponse(dispatch(ctx, actions, "restart_vm", args))
+			res, err := GetResponse(dispatch(ctx, actions, "reboot_vm", args))
 
 			Expect(res.Result).Should(BeNil())
 			Expect(res.Error).ShouldNot(BeNil())
@@ -580,10 +580,10 @@ var _ = Describe("VMs", func() {
 		})
 		It("should return an error when given an invalid argument", func() {
 			actions := map[string]cpi.ActionFn{
-				"restart_vm": RestartVM,
+				"reboot_vm": RestartVM,
 			}
 			args := []interface{}{5}
-			res, err := GetResponse(dispatch(ctx, actions, "restart_vm", args))
+			res, err := GetResponse(dispatch(ctx, actions, "reboot_vm", args))
 
 			Expect(res.Result).Should(BeNil())
 			Expect(res.Error).ShouldNot(BeNil())
@@ -600,10 +600,10 @@ var _ = Describe("VMs", func() {
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
-					"restart_vm": RestartVM,
+					"reboot_vm": RestartVM,
 				}
 				args := []interface{}{"fake-vm-id"}
-				res, err := GetResponse(dispatch(ctxAuth, actions, "restart_vm", args))
+				res, err := GetResponse(dispatch(ctxAuth, actions, "reboot_vm", args))
 
 				Expect(res.Result).Should(BeNil())
 				Expect(res.Error).ShouldNot(BeNil())

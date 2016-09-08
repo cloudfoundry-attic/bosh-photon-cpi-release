@@ -155,7 +155,7 @@ func (api *VmAPI) Restart(id string) (task *Task, err error) {
 		return
 	}
 	res, err := api.client.restClient.Post(
-		api.client.Endpoint+vmUrl+id+"/restart",
+		api.client.Endpoint+vmUrl+id+"/start",
 		"application/json",
 		bytes.NewReader(body),
 		api.client.options.TokenOptions.AccessToken)
