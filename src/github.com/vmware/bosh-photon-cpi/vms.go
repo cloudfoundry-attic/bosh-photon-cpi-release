@@ -310,7 +310,7 @@ func HasVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error)
 	return found, err
 }
 
-func RestartVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error) {
+func RebootVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error) {
 	if len(args) < 1 {
 		return nil, errors.New("Expected at least 1 argument")
 	}
@@ -324,8 +324,8 @@ func RestartVM(ctx *cpi.Context, args []interface{}) (result interface{}, err er
 		return
 	}
 
-	ctx.Logger.Infof("Restarting VM: %s", vmCID)
-	task, err := ctx.Client.VMs.Restart(vmCID)
+	ctx.Logger.Infof("Rebooting VM: %s", vmCID)
+	task, err := ctx.Client.VMs.Start(vmCID)
 	if err != nil {
 		return
 	}
