@@ -310,7 +310,7 @@ func HasVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error)
 	return found, err
 }
 
-func RestartVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error) {
+func RebootVM(ctx *cpi.Context, args []interface{}) (result interface{}, err error) {
 	if len(args) < 1 {
 		return nil, errors.New("Expected at least 1 argument")
 	}
@@ -324,16 +324,30 @@ func RestartVM(ctx *cpi.Context, args []interface{}) (result interface{}, err er
 		return
 	}
 
-	ctx.Logger.Infof("Restarting VM: %s", vmCID)
-	task, err := ctx.Client.VMs.Restart(vmCID)
+	ctx.Logger.Infof("Rebooting VM: %s", vmCID)
+
+	ctx.Logger.Info("Stopping VM")
+	stopTask, err := ctx.Client.VMs.Stop(vmCID)
 	if err != nil {
 		return
 	}
-	ctx.Logger.Infof("Waiting on task: %#v", task)
-	_, err = ctx.Client.Tasks.Wait(task.ID)
+	ctx.Logger.Infof("Waiting on task: %#v", stopTask)
+	_, err = ctx.Client.Tasks.Wait(stopTask.ID)
 	if err != nil {
 		return
 	}
+
+	ctx.Logger.Info("Starting VM")
+	startTask, err := ctx.Client.VMs.Start(vmCID)
+	if err != nil {
+		return
+	}
+	ctx.Logger.Infof("Waiting on task: %#v", startTask)
+	_, err = ctx.Client.Tasks.Wait(startTask.ID)
+	if err != nil {
+		return
+	}
+
 	return nil, nil
 }
 

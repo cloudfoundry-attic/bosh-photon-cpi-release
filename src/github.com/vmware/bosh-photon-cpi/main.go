@@ -36,7 +36,7 @@ func main() {
 		"create_vm":       CreateVM,
 		"delete_vm":       DeleteVM,
 		"has_vm":          HasVM,
-		"restart_vm":      RestartVM,
+		"reboot_vm":       RebootVM,
 		"set_vm_metadata": SetVmMetadata,
 	}
 
