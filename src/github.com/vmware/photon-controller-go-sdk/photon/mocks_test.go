@@ -51,6 +51,11 @@ type MockTenantsPage struct {
 	PreviousPageLink string   `json:"previousPageLink"`
 }
 
+type MockTenantPage struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type MockVmsPage struct {
 	Items            []VM   `json:"items"`
 	NextPageLink     string `json:"nextPageLink"`
@@ -67,6 +72,12 @@ type MockSubnetsPage struct {
 	Items            []Subnet `json:"items"`
 	NextPageLink     string   `json:"nextPageLink"`
 	PreviousPageLink string   `json:"previousPageLink"`
+}
+
+type MockVirtualSubnetsPage struct {
+	Items            []VirtualSubnet `json:"items"`
+	NextPageLink     string          `json:"nextPageLink"`
+	PreviousPageLink string          `json:"previousPageLink"`
 }
 
 type MockClustersPage struct {
@@ -175,6 +186,14 @@ func createMockTenantsPage(tenants ...Tenant) *MockTenantsPage {
 	return &tenantsPage
 }
 
+func createMockTenantPage() *MockTenantPage {
+	tenantPage := MockTenantPage{
+		ID:   "12345",
+		Name: "TestTenant",
+	}
+	return &tenantPage
+}
+
 func createMockVmsPage(vms ...VM) *MockVmsPage {
 	vmsPage := MockVmsPage{
 		Items:            vms,
@@ -203,6 +222,16 @@ func createMockSubnetsPage(networks ...Subnet) *MockSubnetsPage {
 	}
 
 	return &networksPage
+}
+
+func createMockVirtualSubnetsPage(networks ...VirtualSubnet) *MockVirtualSubnetsPage {
+	virtualSubnetsPage := MockVirtualSubnetsPage{
+		Items:            networks,
+		NextPageLink:     "",
+		PreviousPageLink: "",
+	}
+
+	return &virtualSubnetsPage
 }
 
 func createMockClustersPage(clusters ...Cluster) *MockClustersPage {
@@ -247,7 +276,8 @@ func createMockApiError(code string, message string, httpStatusCode int) *ApiErr
 
 func createMockAuthInfo(server *mocks.Server) (mock *AuthInfo) {
 	mock = &AuthInfo{
-		Enabled: false,
+		Endpoint: "",
+		Port:     0,
 	}
 
 	if server == nil {
@@ -259,9 +289,9 @@ func createMockAuthInfo(server *mocks.Server) (mock *AuthInfo) {
 		return
 	}
 
-	mock.Enabled = true
 	mock.Endpoint = address
 	mock.Port = port
+
 	return
 }
 

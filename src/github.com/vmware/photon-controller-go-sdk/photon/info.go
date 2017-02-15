@@ -13,25 +13,27 @@ import (
 	"encoding/json"
 )
 
-// Contains functionality for status API.
-type StatusAPI struct {
+type InfoAPI struct {
 	client *Client
 }
 
-var statusUrl string = "/status"
+var infoUrl = "/info"
 
-// Returns the status of an photon endpoint.
-func (api *StatusAPI) Get() (status *Status, err error) {
-	res, err := api.client.restClient.Get(api.client.Endpoint+statusUrl, api.client.options.TokenOptions)
+// Get info
+func (api *InfoAPI) Get() (info *Info, err error) {
+	res, err := api.client.restClient.Get(api.client.Endpoint+infoUrl, api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
+
 	defer res.Body.Close()
+
 	res, err = getError(res)
 	if err != nil {
 		return
 	}
-	status = &Status{}
-	err = json.NewDecoder(res.Body).Decode(status)
+
+	info = new(Info)
+	err = json.NewDecoder(res.Body).Decode(info)
 	return
 }

@@ -12,6 +12,7 @@ package photon
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/vmware/photon-controller-go-sdk/photon/lightwave"
 )
 
@@ -24,7 +25,7 @@ const authUrl string = "/auth"
 
 // Gets authentication info.
 func (api *AuthAPI) Get() (info *AuthInfo, err error) {
-	res, err := api.client.restClient.Get(api.client.Endpoint+authUrl, "")
+	res, err := api.client.restClient.Get(api.client.Endpoint+authUrl, nil)
 	if err != nil {
 		return
 	}
@@ -72,10 +73,6 @@ func (api *AuthAPI) getAuthEndpoint() (endpoint string, err error) {
 	authInfo, err := api.client.Auth.Get()
 	if err != nil {
 		return
-	}
-
-	if !authInfo.Enabled {
-		return "", SdkError{Message: "Authentication not enabled on this endpoint"}
 	}
 
 	if authInfo.Port == 0 {

@@ -112,3 +112,7 @@ func (s *stemcell) Close() (err error) {
 func (s *stemcell) Read(p []byte) (n int, err error) {
 	return s.gz.Read(p)
 }
+
+func (s *stemcell) Seek(offset int64, whence int) (ret int64, err error) {
+	return s.file.Seek(offset, whence)
+}

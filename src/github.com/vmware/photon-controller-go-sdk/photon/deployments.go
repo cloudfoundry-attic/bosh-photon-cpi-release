@@ -21,74 +21,9 @@ type DeploymentsAPI struct {
 
 var deploymentUrl string = "/deployments"
 
-// Creates a deployment
-func (api *DeploymentsAPI) Create(deploymentSpec *DeploymentCreateSpec) (task *Task, err error) {
-	body, err := json.Marshal(deploymentSpec)
-	if err != nil {
-		return
-	}
-	res, err := api.client.restClient.Post(
-		api.client.Endpoint+deploymentUrl,
-		"application/json",
-		bytes.NewBuffer(body),
-		api.client.options.TokenOptions.AccessToken)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
-	task, err = getTask(getError(res))
-	return
-}
-
-// Deletes a deployment with specified ID.
-func (api *DeploymentsAPI) Delete(id string) (task *Task, err error) {
-	res, err := api.client.restClient.Delete(api.getEntityUrl(id), api.client.options.TokenOptions.AccessToken)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
-	task, err = getTask(getError(res))
-	return
-}
-
-// Deploys a deployment with specified ID.
-func (api *DeploymentsAPI) Deploy(id string, config *DeploymentDeployOperation) (task *Task, err error) {
-	body, err := json.Marshal(config)
-	if err != nil {
-		return
-	}
-
-	res, err := api.client.restClient.Post(
-		api.getEntityUrl(id)+"/deploy",
-		"application/json",
-		bytes.NewBuffer(body),
-		api.client.options.TokenOptions.AccessToken)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
-	task, err = getTask(getError(res))
-	return
-}
-
-// Destroys a deployment with specified ID.
-func (api *DeploymentsAPI) Destroy(id string) (task *Task, err error) {
-	res, err := api.client.restClient.Post(
-		api.getEntityUrl(id)+"/destroy",
-		"application/json",
-		bytes.NewBuffer([]byte("")),
-		api.client.options.TokenOptions.AccessToken)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
-	task, err = getTask(getError(res))
-	return
-}
-
 // Returns all deployments.
 func (api *DeploymentsAPI) GetAll() (result *Deployments, err error) {
-	res, err := api.client.restClient.Get(api.client.Endpoint+deploymentUrl, api.client.options.TokenOptions.AccessToken)
+	res, err := api.client.restClient.Get(api.client.Endpoint+deploymentUrl, api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
@@ -104,7 +39,7 @@ func (api *DeploymentsAPI) GetAll() (result *Deployments, err error) {
 
 // Gets a deployment with the specified ID.
 func (api *DeploymentsAPI) Get(id string) (deployment *Deployment, err error) {
-	res, err := api.client.restClient.Get(api.getEntityUrl(id), api.client.options.TokenOptions.AccessToken)
+	res, err := api.client.restClient.Get(api.getEntityUrl(id), api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
@@ -121,7 +56,7 @@ func (api *DeploymentsAPI) Get(id string) (deployment *Deployment, err error) {
 // Gets all hosts with the specified deployment ID.
 func (api *DeploymentsAPI) GetHosts(id string) (result *Hosts, err error) {
 	uri := api.getEntityUrl(id) + "/hosts"
-	res, err := api.client.restClient.GetList(api.client.Endpoint, uri, api.client.options.TokenOptions.AccessToken)
+	res, err := api.client.restClient.GetList(api.client.Endpoint, uri, api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
@@ -134,7 +69,7 @@ func (api *DeploymentsAPI) GetHosts(id string) (result *Hosts, err error) {
 // Gets all the vms with the specified deployment ID.
 func (api *DeploymentsAPI) GetVms(id string) (result *VMs, err error) {
 	uri := api.getEntityUrl(id) + "/vms"
-	res, err := api.client.restClient.GetList(api.client.Endpoint, uri, api.client.options.TokenOptions.AccessToken)
+	res, err := api.client.restClient.GetList(api.client.Endpoint, uri, api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
@@ -153,8 +88,8 @@ func (api *DeploymentsAPI) InitializeDeploymentMigration(sourceAddress *Initiali
 	res, err := api.client.restClient.Post(
 		api.getEntityUrl(id)+"/initialize_migration",
 		"application/json",
-		bytes.NewBuffer(body),
-		api.client.options.TokenOptions.AccessToken)
+		bytes.NewReader(body),
+		api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
@@ -172,8 +107,8 @@ func (api *DeploymentsAPI) FinalizeDeploymentMigration(sourceAddress *FinalizeMi
 	res, err := api.client.restClient.Post(
 		api.getEntityUrl(id)+"/finalize_migration",
 		"application/json",
-		bytes.NewBuffer(body),
-		api.client.options.TokenOptions.AccessToken)
+		bytes.NewReader(body),
+		api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
@@ -196,8 +131,24 @@ func (api *DeploymentsAPI) SetImageDatastores(id string, imageDatastores *ImageD
 	res, err := api.client.restClient.Post(
 		api.getEntityUrl(id)+"/set_image_datastores",
 		"application/json",
-		bytes.NewBuffer(body),
-		api.client.options.TokenOptions.AccessToken)
+		bytes.NewReader(body),
+		api.client.options.TokenOptions)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+
+	task, err = getTask(getError(res))
+	return
+}
+
+// Synchronizes hosts configurations
+func (api *DeploymentsAPI) SyncHostsConfig(id string) (task *Task, err error) {
+	res, err := api.client.restClient.Post(
+		api.getEntityUrl(id)+"/sync_hosts_config",
+		"application/json",
+		bytes.NewReader([]byte("")),
+		api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
@@ -212,8 +163,8 @@ func (api *DeploymentsAPI) PauseSystem(id string) (task *Task, err error) {
 	res, err := api.client.restClient.Post(
 		api.getEntityUrl(id)+"/pause_system",
 		"application/json",
-		bytes.NewBuffer([]byte("")),
-		api.client.options.TokenOptions.AccessToken)
+		bytes.NewReader([]byte("")),
+		api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
@@ -228,8 +179,8 @@ func (api *DeploymentsAPI) PauseBackgroundTasks(id string) (task *Task, err erro
 	res, err := api.client.restClient.Post(
 		api.getEntityUrl(id)+"/pause_background_tasks",
 		"application/json",
-		bytes.NewBuffer([]byte("")),
-		api.client.options.TokenOptions.AccessToken)
+		bytes.NewReader([]byte("")),
+		api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
@@ -244,8 +195,8 @@ func (api *DeploymentsAPI) ResumeSystem(id string) (task *Task, err error) {
 	res, err := api.client.restClient.Post(
 		api.getEntityUrl(id)+"/resume_system",
 		"application/json",
-		bytes.NewBuffer([]byte("")),
-		api.client.options.TokenOptions.AccessToken)
+		bytes.NewReader([]byte("")),
+		api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
@@ -264,8 +215,8 @@ func (api *DeploymentsAPI) EnableClusterType(id string, clusterConfigSpec *Clust
 	res, err := api.client.restClient.Post(
 		api.getEntityUrl(id)+"/enable_cluster_type",
 		"application/json",
-		bytes.NewBuffer(body),
-		api.client.options.TokenOptions.AccessToken)
+		bytes.NewReader(body),
+		api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
@@ -284,8 +235,29 @@ func (api *DeploymentsAPI) DisableClusterType(id string, clusterConfigSpec *Clus
 	res, err := api.client.restClient.Post(
 		api.getEntityUrl(id)+"/disable_cluster_type",
 		"application/json",
-		bytes.NewBuffer(body),
-		api.client.options.TokenOptions.AccessToken)
+		bytes.NewReader(body),
+		api.client.options.TokenOptions)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+
+	task, err = getTask(getError(res))
+	return
+}
+
+// Configure NSX.
+func (api *DeploymentsAPI) ConfigureNsx(id string, nsxConfigSpec *NsxConfigurationSpec) (task *Task, err error) {
+	body, err := json.Marshal(nsxConfigSpec)
+	if err != nil {
+		return
+	}
+
+	res, err := api.client.restClient.Post(
+		api.getEntityUrl(id)+"/configure_nsx",
+		"application/json",
+		bytes.NewReader(body),
+		api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}

@@ -37,9 +37,11 @@ type Client struct {
 	Deployments       *DeploymentsAPI
 	ResourceTickets   *ResourceTicketsAPI
 	Subnets           *SubnetsAPI
+	VirtualSubnets    *VirtualSubnetsAPI
 	Clusters          *ClustersAPI
 	Auth              *AuthAPI
 	AvailabilityZones *AvailabilityZonesAPI
+	Info              *InfoAPI
 }
 
 // Represents Tokens
@@ -50,6 +52,8 @@ type TokenOptions struct {
 	IdToken      string `json:"id_token"`
 	TokenType    string `json:"token_type"`
 }
+
+type TokenCallback func(string)
 
 // Options for Client
 type ClientOptions struct {
@@ -77,6 +81,11 @@ type ClientOptions struct {
 
 	// Tokens for user authentication. Default is empty.
 	TokenOptions *TokenOptions
+
+	// A function to be called if the access token was refreshed
+	// The client can save the new access token for future API
+	// calls so that it doesn't need to be refreshed again.
+	UpdateAccessTokenCallback TokenCallback
 }
 
 // Creates a new photon client with specified options. If options
@@ -108,6 +117,7 @@ func NewClient(endpoint string, options *ClientOptions, logger *log.Logger) (c *
 			defaultOptions.RootCAs = options.RootCAs
 		}
 		defaultOptions.IgnoreCertificate = options.IgnoreCertificate
+		defaultOptions.UpdateAccessTokenCallback = options.UpdateAccessTokenCallback
 	}
 
 	if logger == nil {
@@ -122,9 +132,17 @@ func NewClient(endpoint string, options *ClientOptions, logger *log.Logger) (c *
 
 	endpoint = strings.TrimRight(endpoint, "/")
 
+	tokenCallback := func(newToken string) {
+		c.options.TokenOptions.AccessToken = newToken
+		if c.options.UpdateAccessTokenCallback != nil {
+			c.options.UpdateAccessTokenCallback(newToken)
+		}
+	}
+
 	restClient := &restClient{
 		httpClient: &http.Client{Transport: tr},
 		logger:     logger,
+		UpdateAccessTokenCallback: tokenCallback,
 	}
 
 	c = &Client{Endpoint: endpoint, restClient: restClient, logger: logger}
@@ -144,9 +162,15 @@ func NewClient(endpoint string, options *ClientOptions, logger *log.Logger) (c *
 	c.Deployments = &DeploymentsAPI{c}
 	c.ResourceTickets = &ResourceTicketsAPI{c}
 	c.Subnets = &SubnetsAPI{c}
+	c.VirtualSubnets = &VirtualSubnetsAPI{c}
 	c.Clusters = &ClustersAPI{c}
 	c.Auth = &AuthAPI{c}
 	c.AvailabilityZones = &AvailabilityZonesAPI{c}
+	c.Info = &InfoAPI{c}
+
+	// Tell the restClient about the Auth API so it can request new
+	// acces tokens when they expire
+	restClient.Auth = c.Auth
 	return
 }
 
