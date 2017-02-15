@@ -10,8 +10,6 @@
 package main
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"errors"
 	"github.com/vmware/bosh-photon-cpi/cpi"
 	"github.com/vmware/photon-controller-go-sdk/photon"
@@ -31,11 +29,11 @@ func CreateStemcell(ctx *cpi.Context, args []interface{}) (result interface{}, e
 	ctx.Logger.Infof("CreateStemcell with imagePath: '%s'", imagePath)
 
 	ctx.Logger.Info("Reading stemcell from disk")
-	stemcell, err := newStemcell(imagePath)
+	imageFile, err := os.Open(imagePath)
 	if err != nil {
 		return
 	}
-	defer stemcell.Close()
+	defer imageFile.Close()
 
 	defaultReplication := "EAGER"
 	options := &photon.ImageCreateOptions{
@@ -43,7 +41,7 @@ func CreateStemcell(ctx *cpi.Context, args []interface{}) (result interface{}, e
 	}
 
 	ctx.Logger.Info("Beginning stemcell upload")
-	task, err := ctx.Client.Images.Create(stemcell, filepath.Base(imagePath), options)
+	task, err := ctx.Client.Images.Create(imageFile, filepath.Base(imagePath), options)
 	if err != nil {
 		return
 	}
@@ -79,36 +77,4 @@ func DeleteStemcell(ctx *cpi.Context, args []interface{}) (result interface{}, e
 		return
 	}
 	return nil, nil
-}
-
-func newStemcell(filePath string) (sc *stemcell, err error) {
-	sc = &stemcell{}
-	sc.file, err = os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-
-	sc.gz, err = gzip.NewReader(sc.file)
-	if err != nil {
-		sc.file.Close()
-		return nil, err
-	}
-
-	return sc, nil
-}
-
-type stemcell struct {
-	file *os.File
-	gz   *gzip.Reader
-	tr   *tar.Reader
-}
-
-func (s *stemcell) Close() (err error) {
-	err = s.gz.Close()
-	err = s.file.Close()
-	return
-}
-
-func (s *stemcell) Read(p []byte) (n int, err error) {
-	return s.gz.Read(p)
 }

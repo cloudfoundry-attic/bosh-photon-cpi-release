@@ -361,6 +361,7 @@ type VM struct {
 	Name          string            `json:"name"`
 	State         string            `json:"state"`
 	ID            string            `json:"id"`
+	FloatingIp    string            `json:"floatingIp"`
 }
 
 // Represents multiple VMs returned by the API.
@@ -380,6 +381,11 @@ type ISO struct {
 type VmDiskOperation struct {
 	DiskID    string                 `json:"diskId"`
 	Arguments map[string]interface{} `json:"arguments,omitempty"`
+}
+
+// Represents a floating IP operation related to a VM.
+type VmFloatingIpSpec struct {
+	NetworkId string `json:"networkId"`
 }
 
 // Creation spec for flavors.
@@ -435,23 +441,6 @@ type Hosts struct {
 	Items []Host `json:"items"`
 }
 
-// Creation spec for deployments.
-type DeploymentCreateSpec struct {
-	NTPEndpoint             interface{}                     `json:"ntpEndpoint"`
-	UseImageDatastoreForVms bool                            `json:"useImageDatastoreForVms"`
-	SyslogEndpoint          interface{}                     `json:"syslogEndpoint"`
-	Stats                   *StatsInfo                      `json:"stats"`
-	ImageDatastores         []string                        `json:"imageDatastores"`
-	Auth                    *AuthInfo                       `json:"auth"`
-	NetworkConfiguration    *NetworkConfigurationCreateSpec `json:"networkConfiguration"`
-	LoadBalancerEnabled     bool                            `json:"loadBalancerEnabled"`
-}
-
-// Deployment deploy config.
-type DeploymentDeployOperation struct {
-	DesiredState string `json:"desiredState"`
-}
-
 type MigrationStatus struct {
 	CompletedDataMigrationCycles int `json:"completedDataMigrationCycles"`
 	DataMigrationCycleProgress   int `json:"dataMigrationCycleProgress"`
@@ -486,12 +475,12 @@ type Deployments struct {
 
 // Represents source load balacer address to migrate deployment
 type InitializeMigrationOperation struct {
-	SourceLoadBalancerAddress string `json:"sourceLoadBalancerAddress"`
+	SourceNodeGroupReference string `json:"sourceNodeGroupReference"`
 }
 
 // Represents source load balacer address to finish migration of deployment
 type FinalizeMigrationOperation struct {
-	SourceLoadBalancerAddress string `json:"sourceLoadBalancerAddress"`
+	SourceNodeGroupReference string `json:"sourceNodeGroupReference"`
 }
 
 // Represents stats information
@@ -508,32 +497,44 @@ type AuthInfo struct {
 	Tenant         string   `json:"tenant,omitempty"`
 	Port           int      `json:"port,omitempty"`
 	SecurityGroups []string `json:"securityGroups,omitempty"`
-	Enabled        bool     `json:"enabled,omitempty"`
 	Username       string   `json:"username,omitempty"`
+}
+
+// Represents ip range
+type IpRange struct {
+	Start string `json:"start,omitempty"`
+	End   string `json:"end,omitempty"`
 }
 
 // Represents creation spec for network configuration.
 type NetworkConfigurationCreateSpec struct {
-	Enabled         bool   `json:"sdnEnabled,omitempty"`
-	Address         string `json:"networkManagerAddress,omitempty"`
-	Username        string `json:"networkManagerUsername,omitempty"`
-	Password        string `json:"networkManagerPassword,omitempty"`
-	NetworkZoneId   string `json:"networkZoneId,omitempty"`
-	TopRouterId     string `json:"networkTopRouterId,omitempty"`
-	IpRange         string `json:"ipRange,omitempty"`
-	FloatingIpRange string `json:"floatingIpRange,omitempty"`
+	Enabled         bool     `json:"sdnEnabled,omitempty"`
+	Address         string   `json:"networkManagerAddress,omitempty"`
+	Username        string   `json:"networkManagerUsername,omitempty"`
+	Password        string   `json:"networkManagerPassword,omitempty"`
+	NetworkZoneId   string   `json:"networkZoneId,omitempty"`
+	TopRouterId     string   `json:"networkTopRouterId,omitempty"`
+	EdgeIpPoolId    string   `json:"networkEdgeIpPoolId,omitempty"`
+	HostUplinkPnic  string   `json:"networkHostUplinkPnic,omitempty"`
+	IpRange         string   `json:"ipRange,omitempty"`
+	ExternalIpRange *IpRange `json:"externalIpRange,omitempty"`
+	DhcpServers     []string `json:"dhcpServers,omitempty"`
 }
 
 // Represents network configuration.
 type NetworkConfiguration struct {
-	Enabled         bool   `json:"sdnEnabled,omitempty"`
-	Address         string `json:"networkManagerAddress,omitempty"`
-	Username        string `json:"networkManagerUsername,omitempty"`
-	Password        string `json:"networkManagerPassword,omitempty"`
-	NetworkZoneId   string `json:"networkZoneId,omitempty"`
-	TopRouterId     string `json:"networkTopRouterId,omitempty"`
-	IpRange         string `json:"ipRange,omitempty"`
-	FloatingIpRange string `json:"floatingIpRange,omitempty"`
+	Enabled         bool     `json:"sdnEnabled,omitempty"`
+	Address         string   `json:"networkManagerAddress,omitempty"`
+	Username        string   `json:"networkManagerUsername,omitempty"`
+	Password        string   `json:"networkManagerPassword,omitempty"`
+	NetworkZoneId   string   `json:"networkZoneId,omitempty"`
+	TopRouterId     string   `json:"networkTopRouterId,omitempty"`
+	EdgeIpPoolId    string   `json:"networkEdgeIpPoolId,omitempty"`
+	HostUplinkPnic  string   `json:"networkHostUplinkPnic,omitempty"`
+	IpRange         string   `json:"ipRange,omitempty"`
+	FloatingIpRange *IpRange `json:"floatingIpRange,omitempty"`
+	SnatIp          string   `json:"snatIp,omitempty"`
+	DhcpServers     []string `json:"dhcpServers,omitempty"`
 }
 
 // Creation spec for subnets.
@@ -561,6 +562,37 @@ type Subnets struct {
 	Items []Subnet `json:"items"`
 }
 
+// Create spec for virtual subnet
+type VirtualSubnetCreateSpec struct {
+	Name                 string `json:"name"`
+	Description          string `json:"description,omitempty"`
+	RoutingType          string `json:"routingType"`
+	Size                 int    `json:"size"`
+	ReservedStaticIpSize int    `json:"reservedStaticIpSize,omitempty"`
+}
+
+// Represents a virtual network
+type VirtualSubnet struct {
+	ID             string   `json:"id"`
+	Name           string   `json:"name"`
+	Description    string   `json:"description,omitempty"`
+	State          string   `json:"state"`
+	RoutingType    string   `json:"routingType"`
+	IsDefault      bool     `json:"isDefault"`
+	Cidr           string   `json:"cidr,omitempty"`
+	LowIpDynamic   string   `json:"lowIpDynamic,omitempty"`
+	HighIpDynamic  string   `json:"highIpDynamic,omitempty"`
+	LowIpStatic    string   `json:"lowIpStatic,omitempty"`
+	HighIpStatic   string   `json:"highIpStatic,omitempty"`
+	ReservedIpList []string `json:"reservedIpList"`
+	SelfLink       string   `json:"selfLink"`
+}
+
+// Represents multiple virtual subnets returned
+type VirtualSubnets struct {
+	Items []VirtualSubnet `json:"items"`
+}
+
 // Creation spec for Cluster Configuration.
 type ClusterConfigurationSpec struct {
 	Type    string `json:"type"`
@@ -581,8 +613,8 @@ type ClusterCreateSpec struct {
 	VMFlavor           string            `json:"vmFlavor,omitempty"`
 	DiskFlavor         string            `json:"diskFlavor,omitempty"`
 	NetworkID          string            `json:"vmNetworkId,omitempty"`
-	SlaveCount         int               `json:"slaveCount"`
-	BatchSize          int               `json:"slaveBatchExpansionSize,omitempty"`
+	WorkerCount        int               `json:"workerCount"`
+	BatchSizeWorker    int               `json:"workerBatchExpansionSize,omitempty"`
 	ExtendedProperties map[string]string `json:"extendedProperties"`
 }
 
@@ -594,8 +626,9 @@ type Cluster struct {
 	ID                 string            `json:"id"`
 	Type               string            `json:"type"`
 	ProjectID          string            `json:"projectID,omitempty"`
-	SlaveCount         int               `json:"slaveCount"`
+	WorkerCount        int               `json:"workerCount"`
 	SelfLink           string            `json:"selfLink,omitempty"`
+	ErrorReason        string            `json:"errorReason,omitempty"`
 	ExtendedProperties map[string]string `json:"extendedProperties"`
 }
 
@@ -606,7 +639,7 @@ type Clusters struct {
 
 // Represents cluster size that can be resized for cluster
 type ClusterResizeOperation struct {
-	NewSlaveCount int `json:"newSlaveCount"`
+	NewWorkerCount int `json:"newWorkerCount"`
 }
 
 // Represents a security group
@@ -653,4 +686,27 @@ type ImageDatastores struct {
 type ImageCreateSpec struct {
 	Name            string `json:"name"`
 	ReplicationType string `json:"replicationType"`
+}
+
+// Represents deployment info
+type Info struct {
+	BaseVersion   string `json:"baseVersion"`
+	FullVersion   string `json:"fullVersion"`
+	GitCommitHash string `json:"gitCommitHash"`
+	NetworkType   string `json:"networkType"`
+}
+
+// NSX configuration spec
+type NsxConfigurationSpec struct {
+	NsxAddress             string            `json:"nsxAddress"`
+	NsxUsername            string            `json:"nsxUsername"`
+	NsxPassword            string            `json:"nsxPassword"`
+	DhcpServerAddresses    map[string]string `json:"dhcpServerAddresses"`
+	PrivateIpRootCidr      string            `json:"privateIpRootCidr"`
+	FloatingIpRootRange    IpRange           `json:"floatingIpRootRange"`
+	T0RouterId             string            `json:"t0RouterId"`
+	EdgeClusterId          string            `json:"edgeClusterId"`
+	OverlayTransportZoneId string            `json:"overlayTransportZoneId"`
+	TunnelIpPoolId         string            `json:"tunnelIpPoolId"`
+	HostUplinkPnic         string            `json:"hostUplinkPnic"`
 }
