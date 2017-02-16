@@ -10,4 +10,6 @@ builds:
     version: 1.0.0
   3eb75a3f-5a9c-40b6-9ae3-88915fa36d31:
     version: 1.0.0.u1
+  e1bc86b4-2f91-4925-88e4-e40f3ef625e6:
+    version: 1.1.1
 format-version: '2'
