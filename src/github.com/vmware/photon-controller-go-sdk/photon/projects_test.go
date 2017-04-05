@@ -15,6 +15,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vmware/photon-controller-go-sdk/photon/internal/mocks"
+	"reflect"
 )
 
 var _ = Describe("Project", func() {
@@ -22,7 +23,6 @@ var _ = Describe("Project", func() {
 		server     *mocks.Server
 		client     *Client
 		tenantID   string
-		resName    string
 		projID     string
 		flavorName string
 		flavorID   string
@@ -31,8 +31,7 @@ var _ = Describe("Project", func() {
 	BeforeEach(func() {
 		server, client = testSetup()
 		tenantID = createTenant(server, client)
-		resName = createResTicket(server, client, tenantID)
-		projID = createProject(server, client, tenantID, resName)
+		projID = createProject(server, client, tenantID)
 		flavorName, flavorID = createFlavor(server, client)
 
 	})
@@ -211,46 +210,88 @@ var _ = Describe("Project", func() {
 		})
 	})
 
-	Describe("GetProjectClusters", func() {
-		It("GetAll returns cluster", func() {
-			if isIntegrationTest() {
-				Skip("Skipping cluster test on integration mode. Need to set extendedProperties to use real IPs and masks")
-			}
-			mockTask := createMockTask("CREATE_CLUSTER", "COMPLETED")
+	Describe("GetProjectRouters", func() {
+		It("GetAll returns router", func() {
+			mockTask := createMockTask("CREATE_ROUTER", "COMPLETED")
 			server.SetResponseJson(200, mockTask)
-
-			clusterSpec := &ClusterCreateSpec{
-				Name:               randomString(10, "go-sdk-cluster-"),
-				Type:               "KUBERNETES",
-				WorkerCount:        50,
-				BatchSizeWorker:    5,
-				ExtendedProperties: map[string]string{},
+			routerSpec := &RouterCreateSpec{
+				Name:          "router_name",
+				PrivateIpCidr: "192.168.0.1/24",
 			}
 
-			task, err := client.Projects.CreateCluster(projID, clusterSpec)
+			task, err := client.Projects.CreateRouter(projID, routerSpec)
 			task, err = client.Tasks.Wait(task.ID)
 			GinkgoT().Log(err)
 			Expect(err).Should(BeNil())
 
-			mockCluster := Cluster{Name: clusterSpec.Name}
-			server.SetResponseJson(200, createMockClustersPage(mockCluster))
-			clusterList, err := client.Projects.GetClusters(projID)
+			routerMock := Router{
+				Name:          routerSpec.Name,
+				PrivateIpCidr: routerSpec.PrivateIpCidr,
+			}
+			server.SetResponseJson(200, &Routers{[]Router{routerMock}})
+			routerList, err := client.Projects.GetRouters(projID, &RouterGetOptions{})
 			GinkgoT().Log(err)
 			Expect(err).Should(BeNil())
-			Expect(clusterList).ShouldNot(BeNil())
+			Expect(routerList).ShouldNot(BeNil())
 
 			var found bool
-			for _, cluster := range clusterList.Items {
-				if cluster.Name == clusterSpec.Name && cluster.ID == task.Entity.ID {
+			for _, router := range routerList.Items {
+				if router.Name == routerSpec.Name && router.ID == task.Entity.ID {
 					found = true
 					break
 				}
 			}
 			Expect(found).Should(BeTrue())
 
-			mockTask = createMockTask("DELETE_CLUSTER", "COMPLETED")
+			mockTask = createMockTask("DELETE_ROUTER", "COMPLETED")
 			server.SetResponseJson(200, mockTask)
-			task, err = client.Clusters.Delete(task.Entity.ID)
+			task, err = client.Routers.Delete(task.Entity.ID)
+			task, err = client.Tasks.Wait(task.ID)
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+		})
+	})
+
+	Describe("GetProjectServices", func() {
+		It("GetAll returns service", func() {
+			if isIntegrationTest() {
+				Skip("Skipping service test on integration mode. Need to set extendedProperties to use real IPs and masks")
+			}
+			mockTask := createMockTask("CREATE_SERVICE", "COMPLETED")
+			server.SetResponseJson(200, mockTask)
+
+			serviceSpec := &ServiceCreateSpec{
+				Name:               randomString(10, "go-sdk-service-"),
+				Type:               "KUBERNETES",
+				WorkerCount:        50,
+				BatchSizeWorker:    5,
+				ExtendedProperties: map[string]string{},
+			}
+
+			task, err := client.Projects.CreateService(projID, serviceSpec)
+			task, err = client.Tasks.Wait(task.ID)
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+
+			mockService := Service{Name: serviceSpec.Name}
+			server.SetResponseJson(200, createMockServicesPage(mockService))
+			serviceList, err := client.Projects.GetServices(projID)
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+			Expect(serviceList).ShouldNot(BeNil())
+
+			var found bool
+			for _, service := range serviceList.Items {
+				if service.Name == serviceSpec.Name && service.ID == task.Entity.ID {
+					found = true
+					break
+				}
+			}
+			Expect(found).Should(BeTrue())
+
+			mockTask = createMockTask("DELETE_SERVICE", "COMPLETED")
+			server.SetResponseJson(200, mockTask)
+			task, err = client.Services.Delete(task.Entity.ID)
 			task, err = client.Tasks.Wait(task.ID)
 
 			GinkgoT().Log(err)
@@ -285,4 +326,136 @@ var _ = Describe("Project", func() {
 		})
 	})
 
+	Describe("ProjectQuota", func() {
+
+		It("Get Project Quota succeeds", func() {
+			mockQuota := createMockQuota()
+
+			// Get current Quota
+			server.SetResponseJson(200, mockQuota)
+			quota, err := client.Projects.GetQuota(tenantID)
+
+			GinkgoT().Log(err)
+			eq := reflect.DeepEqual(quota.QuotaLineItems, mockQuota.QuotaLineItems)
+			Expect(eq).Should(Equal(true))
+		})
+
+		It("Set Project Quota succeeds", func() {
+			mockQuotaSpec := &QuotaSpec{
+				"vmCpu":        {Unit: "COUNT", Limit: 10, Usage: 0},
+				"vmMemory":     {Unit: "GB", Limit: 18, Usage: 0},
+				"diskCapacity": {Unit: "GB", Limit: 100, Usage: 0},
+			}
+
+			mockTask := createMockTask("SET_QUOTA", "COMPLETED")
+			server.SetResponseJson(200, mockTask)
+
+			task, err := client.Projects.SetQuota(tenantID, mockQuotaSpec)
+			task, err = client.Tasks.Wait(task.ID)
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+			Expect(task).ShouldNot(BeNil())
+			Expect(task.Operation).Should(Equal("SET_QUOTA"))
+			Expect(task.State).Should(Equal("COMPLETED"))
+		})
+
+		It("Update Project Quota succeeds", func() {
+			mockQuotaSpec := &QuotaSpec{
+				"vmCpu":        {Unit: "COUNT", Limit: 30, Usage: 0},
+				"vmMemory":     {Unit: "GB", Limit: 40, Usage: 0},
+				"diskCapacity": {Unit: "GB", Limit: 150, Usage: 0},
+			}
+
+			mockTask := createMockTask("UPDATE_QUOTA", "COMPLETED")
+			server.SetResponseJson(200, mockTask)
+
+			task, err := client.Projects.UpdateQuota(tenantID, mockQuotaSpec)
+			task, err = client.Tasks.Wait(task.ID)
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+			Expect(task).ShouldNot(BeNil())
+			Expect(task.Operation).Should(Equal("UPDATE_QUOTA"))
+			Expect(task.State).Should(Equal("COMPLETED"))
+		})
+
+		It("Exclude Project Quota Items succeeds", func() {
+			mockQuotaSpec := &QuotaSpec{
+				"vmCpu2":    {Unit: "COUNT", Limit: 10, Usage: 0},
+				"vmMemory3": {Unit: "GB", Limit: 18, Usage: 0},
+			}
+
+			mockTask := createMockTask("DELETE_QUOTA", "COMPLETED")
+			server.SetResponseJson(200, mockTask)
+
+			task, err := client.Projects.ExcludeQuota(tenantID, mockQuotaSpec)
+			task, err = client.Tasks.Wait(task.ID)
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+			Expect(task).ShouldNot(BeNil())
+			Expect(task.Operation).Should(Equal("DELETE_QUOTA"))
+			Expect(task.State).Should(Equal("COMPLETED"))
+		})
+	})
+})
+
+var _ = Describe("IAM", func() {
+	var (
+		server   *mocks.Server
+		client   *Client
+		tenantID string
+		projID   string
+	)
+
+	BeforeEach(func() {
+		server, client = testSetup()
+		tenantID = createTenant(server, client)
+		projID = createProject(server, client, tenantID)
+	})
+
+	AfterEach(func() {
+		cleanTenants(client)
+		server.Close()
+	})
+
+	Describe("ManageProjectIamPolicy", func() {
+		It("Set IAM Policy succeeds", func() {
+			mockTask := createMockTask("SET_IAM_POLICY", "COMPLETED")
+			server.SetResponseJson(200, mockTask)
+			var policy []PolicyEntry
+			policy = []PolicyEntry{{Principal: "joe@photon.local", Roles: []string{"owner"}}}
+			task, err := client.Projects.SetIam(projID, &policy)
+			task, err = client.Tasks.Wait(task.ID)
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+			Expect(task).ShouldNot(BeNil())
+			Expect(task.Operation).Should(Equal("SET_IAM_POLICY"))
+			Expect(task.State).Should(Equal("COMPLETED"))
+		})
+
+		It("Modify IAM Policy succeeds", func() {
+			mockTask := createMockTask("MODIFY_IAM_POLICY", "COMPLETED")
+			server.SetResponseJson(200, mockTask)
+			var delta PolicyDelta
+			delta = PolicyDelta{Principal: "joe@photon.local", Action: "ADD", Role: "owner"}
+			task, err := client.Projects.ModifyIam(projID, &delta)
+			task, err = client.Tasks.Wait(task.ID)
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+			Expect(task).ShouldNot(BeNil())
+			Expect(task.Operation).Should(Equal("MODIFY_IAM_POLICY"))
+			Expect(task.State).Should(Equal("COMPLETED"))
+		})
+
+		It("Get IAM Policy succeeds", func() {
+			var policy []PolicyEntry
+			policy = []PolicyEntry{{Principal: "joe@photon.local", Roles: []string{"owner"}}}
+			server.SetResponseJson(200, policy)
+			response, err := client.Projects.GetIam(projID)
+
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+			Expect((*response)[0].Principal).Should(Equal(policy[0].Principal))
+			Expect((*response)[0].Roles).Should(Equal(policy[0].Roles))
+		})
+	})
 })
