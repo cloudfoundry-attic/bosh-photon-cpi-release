@@ -12,11 +12,11 @@ package main
 import (
 	"errors"
 	"fmt"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"github.com/vmware/bosh-photon-cpi/cpi"
 	"github.com/vmware/bosh-photon-cpi/logger"
 	. "github.com/vmware/bosh-photon-cpi/mocks"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"io/ioutil"
 	"os"
 )
