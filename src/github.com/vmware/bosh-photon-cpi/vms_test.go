@@ -14,13 +14,13 @@ import (
 	"net/http/httptest"
 	"runtime"
 
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"github.com/vmware/bosh-photon-cpi/cmd"
 	"github.com/vmware/bosh-photon-cpi/cpi"
 	"github.com/vmware/bosh-photon-cpi/logger"
 	. "github.com/vmware/bosh-photon-cpi/mocks"
 	ec "github.com/vmware/photon-controller-go-sdk/photon"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("VMs", func() {
@@ -140,48 +140,48 @@ var _ = Describe("VMs", func() {
 
 			RegisterResponder(
 				"POST",
-				server.URL+"/projects/"+projID+"/vms",
+				server.URL+rootUrl+"/projects/"+projID+"/vms",
 				CreateResponder(200, ToJson(createTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+createTask.Entity.ID,
+				server.URL+rootUrl+"/vms/"+createTask.Entity.ID,
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+createTask.ID,
+				server.URL+rootUrl+"/tasks/"+createTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/"+createTask.Entity.ID+"/attach_iso",
+				server.URL+rootUrl+"/vms/"+createTask.Entity.ID+"/attach_iso",
 				CreateResponder(200, ToJson(isoTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/"+createTask.Entity.ID+"/detach_iso",
+				server.URL+rootUrl+"/vms/"+createTask.Entity.ID+"/detach_iso",
 				CreateResponder(200, ToJson(detachTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/"+createTask.Entity.ID+"/operations",
+				server.URL+rootUrl+"/vms/"+createTask.Entity.ID+"/operations",
 				CreateResponder(200, ToJson(onTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/"+createTask.Entity.ID+"/start",
+				server.URL+rootUrl+"/vms/"+createTask.Entity.ID+"/start",
 				CreateResponder(200, ToJson(onTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/fake-vm-id/set_metadata",
+				server.URL+rootUrl+"/vms/fake-vm-id/set_metadata",
 				CreateResponder(200, ToJson(metadataTask)))
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+isoTask.ID,
+				server.URL+rootUrl+"/tasks/"+isoTask.ID,
 				CreateResponder(200, ToJson(isoCompletedTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+onCompletedTask.ID,
+				server.URL+rootUrl+"/tasks/"+onCompletedTask.ID,
 				CreateResponder(200, ToJson(onCompletedTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+detachTask.ID,
+				server.URL+rootUrl+"/tasks/"+detachTask.ID,
 				CreateResponder(200, ToJson(detachTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -211,11 +211,11 @@ var _ = Describe("VMs", func() {
 
 			RegisterResponder(
 				"POST",
-				server.URL+"/projects/"+projID+"/vms",
+				server.URL+rootUrl+"/projects/"+projID+"/vms",
 				CreateResponder(500, ToJson(createTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+createTask.ID,
+				server.URL+rootUrl+"/tasks/"+createTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -305,35 +305,35 @@ var _ = Describe("VMs", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+deleteTask.Entity.ID,
+				server.URL+rootUrl+"/vms/"+deleteTask.Entity.ID,
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"DELETE",
-				server.URL+"/vms/"+deleteTask.Entity.ID,
+				server.URL+rootUrl+"/vms/"+deleteTask.Entity.ID,
 				CreateResponder(200, ToJson(deleteTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/"+deleteTask.Entity.ID+"/stop",
+				server.URL+rootUrl+"/vms/"+deleteTask.Entity.ID+"/stop",
 				CreateResponder(200, ToJson(offTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/"+deleteTask.Entity.ID+"/detach_disk",
+				server.URL+rootUrl+"/vms/"+deleteTask.Entity.ID+"/detach_disk",
 				CreateResponder(200, ToJson(detachQueuedTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+detachCompletedTask.ID,
+				server.URL+rootUrl+"/tasks/"+detachCompletedTask.ID,
 				CreateResponder(200, ToJson(detachCompletedTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+deleteTask.ID,
+				server.URL+rootUrl+"/tasks/"+deleteTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+offCompletedTask.ID,
+				server.URL+rootUrl+"/tasks/"+offCompletedTask.ID,
 				CreateResponder(200, ToJson(offCompletedTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/projects/"+projID+"/disks",
+				server.URL+rootUrl+"/projects/"+projID+"/disks",
 				CreateResponder(200, ToJson(disks)))
 
 			actions := map[string]cpi.ActionFn{
@@ -348,11 +348,11 @@ var _ = Describe("VMs", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("should return an error when VM not found", func() {
-			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message:""}
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message: ""}
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"fake-vm-id",
+				server.URL+rootUrl+"/vms/"+"fake-vm-id",
 				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
@@ -393,11 +393,11 @@ var _ = Describe("VMs", func() {
 		})
 		Context("when auth is enabled", func() {
 			It("should return an error when VM not found", func() {
-				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message: ""}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/vms/"+"fake-vm-id",
+					server.URL+rootUrl+"/vms/"+"fake-vm-id",
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
@@ -419,7 +419,7 @@ var _ = Describe("VMs", func() {
 			vm := &ec.VM{ID: "fake-vm-id"}
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+vm.ID,
+				server.URL+rootUrl+"/vms/"+vm.ID,
 				CreateResponder(200, ToJson(vm)))
 
 			actions := map[string]cpi.ActionFn{
@@ -437,7 +437,7 @@ var _ = Describe("VMs", func() {
 			vm := &ec.VM{ID: "fake-vm-id"}
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+vm.ID,
+				server.URL+rootUrl+"/vms/"+vm.ID,
 				CreateResponder(404, ToJson(vm)))
 
 			actions := map[string]cpi.ActionFn{
@@ -455,7 +455,7 @@ var _ = Describe("VMs", func() {
 			vm := &ec.VM{ID: "fake-vm-id"}
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+vm.ID,
+				server.URL+rootUrl+"/vms/"+vm.ID,
 				CreateResponder(500, ToJson(vm)))
 
 			actions := map[string]cpi.ActionFn{
@@ -495,11 +495,11 @@ var _ = Describe("VMs", func() {
 		})
 		Context("when auth is enabled", func() {
 			It("should return false when VM not found", func() {
-				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message: ""}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/vms/"+"fake-vm-id",
+					server.URL+rootUrl+"/vms/"+"fake-vm-id",
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
@@ -528,23 +528,23 @@ var _ = Describe("VMs", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+stopTask.Entity.ID,
+				server.URL+rootUrl+"/vms/"+stopTask.Entity.ID,
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/"+stopTask.Entity.ID+"/stop",
+				server.URL+rootUrl+"/vms/"+stopTask.Entity.ID+"/stop",
 				CreateResponder(200, ToJson(stopTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+stopTask.ID,
+				server.URL+rootUrl+"/tasks/"+stopTask.ID,
 				CreateResponder(200, ToJson(stopCompletedTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/"+startTask.Entity.ID+"/start",
+				server.URL+rootUrl+"/vms/"+startTask.Entity.ID+"/start",
 				CreateResponder(200, ToJson(startTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+startTask.ID,
+				server.URL+rootUrl+"/tasks/"+startTask.ID,
 				CreateResponder(200, ToJson(startCompletedTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -559,11 +559,11 @@ var _ = Describe("VMs", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("should return an error when VM not found", func() {
-			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message:""}
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message: ""}
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"fake-vm-id",
+				server.URL+rootUrl+"/vms/"+"fake-vm-id",
 				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
@@ -604,11 +604,11 @@ var _ = Describe("VMs", func() {
 		})
 		Context("when auth is enabled", func() {
 			It("should return an error when VM not found", func() {
-				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message: ""}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/vms/"+"fake-vm-id",
+					server.URL+rootUrl+"/vms/"+"fake-vm-id",
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
