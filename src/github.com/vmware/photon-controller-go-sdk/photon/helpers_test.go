@@ -26,10 +26,25 @@ func hasStep(task *Task, operation, state string) bool {
 	return false
 }
 
+// create mock quota instance
+func createMockQuota() Quota {
+	mockQuota := Quota{
+		QuotaLineItems: map[string]QuotaStatusLineItem{
+			"vmCpu":        {Unit: "COUNT", Limit: 100, Usage: 0},
+			"vmMemory":     {Unit: "GB", Limit: 180, Usage: 0},
+			"diskCapacity": {Unit: "GB", Limit: 1000, Usage: 0},
+		},
+	}
+	return mockQuota
+}
+
 func createTenant(server *mocks.Server, client *Client) string {
 	mockTask := createMockTask("CREATE_TENANT", "COMPLETED")
 	server.SetResponseJson(200, mockTask)
-	tenantSpec := &TenantCreateSpec{Name: randomString(10, "go-sdk-tenant-")}
+	tenantSpec := &TenantCreateSpec{
+		Name:          randomString(10, "go-sdk-tenant-"),
+		ResourceQuota: createMockQuota(),
+	}
 	task, err := client.Tenants.Create(tenantSpec)
 	GinkgoT().Log(err)
 	Expect(err).Should(BeNil())
@@ -42,6 +57,9 @@ func cleanTenants(client *Client) {
 	if err != nil {
 		GinkgoT().Log(err)
 	}
+	if tenants == nil {
+		return
+	}
 	for _, tenant := range tenants.Items {
 		if strings.HasPrefix(tenant.Name, "go-sdk-tenant-") {
 			cleanProjects(client, tenant.ID)
@@ -53,31 +71,27 @@ func cleanTenants(client *Client) {
 	}
 }
 
-func createResTicket(server *mocks.Server, client *Client, tenantID string) string {
-	resTicketName := randomString(10)
-	spec := &ResourceTicketCreateSpec{
-		Name:   resTicketName,
-		Limits: []QuotaLineItem{QuotaLineItem{Unit: "GB", Value: 16, Key: "vm.memory"}},
-	}
-	mockTask := createMockTask("CREATE_RESOURCE_TICKET", "COMPLETED")
-	server.SetResponseJson(200, mockTask)
-	_, err := client.Tenants.CreateResourceTicket(tenantID, spec)
-	GinkgoT().Log(err)
-	Expect(err).Should(BeNil())
-	return resTicketName
-}
-
-func createProject(server *mocks.Server, client *Client, tenantID string, resName string) string {
+func createProject(server *mocks.Server, client *Client, tenantID string) string {
 	mockTask := createMockTask("CREATE_PROJECT", "COMPLETED")
 	server.SetResponseJson(200, mockTask)
 	projSpec := &ProjectCreateSpec{
-		ResourceTicket: ResourceTicketReservation{
-			resName,
-			[]QuotaLineItem{QuotaLineItem{"GB", 2, "vm.memory"}},
-		},
-		Name: randomString(10, "go-sdk-project-"),
+		Name:          randomString(10, "go-sdk-project-"),
+		ResourceQuota: createMockQuota(),
 	}
 	task, err := client.Tenants.CreateProject(tenantID, projSpec)
+	GinkgoT().Log(err)
+	Expect(err).Should(BeNil())
+	return task.Entity.ID
+}
+
+func createRouter(server *mocks.Server, client *Client, projID string) string {
+	mockTask := createMockTask("CREATE_ROUTER", "COMPLETED")
+	server.SetResponseJson(200, mockTask)
+	routerSpec := &RouterCreateSpec{
+		Name:          randomString(10, "go-sdk-project-"),
+		PrivateIpCidr: randomString(10, "go-sdk-project-cidr-"),
+	}
+	task, err := client.Projects.CreateRouter(projID, routerSpec)
 	GinkgoT().Log(err)
 	Expect(err).Should(BeNil())
 	return task.Entity.ID
@@ -88,6 +102,9 @@ func cleanProjects(client *Client, tenantID string) {
 	projList, err := client.Tenants.GetProjects(tenantID, &ProjectGetOptions{})
 	if err != nil {
 		GinkgoT().Log(err)
+	}
+	if projList == nil {
+		return
 	}
 	for _, proj := range projList.Items {
 		if strings.HasPrefix(proj.Name, "go-sdk-project-") {
@@ -166,6 +183,9 @@ func cleanImages(client *Client) {
 	if err != nil {
 		GinkgoT().Log(err)
 	}
+	if imageList == nil {
+		return
+	}
 	for _, image := range imageList.Items {
 		if image.Name == "tty_tiny.ova" {
 			task, err := client.Images.Delete(image.ID)
@@ -194,14 +214,14 @@ func cleanVMs(client *Client, projID string) {
 }
 
 func cleanHosts(client *Client) {
-	hostList, err := client.Hosts.GetAll()
+	hostList, err := client.InfraHosts.GetHosts()
 	if err != nil {
 		GinkgoT().Log(err)
 	}
 	for _, host := range hostList.Items {
 		if host.Metadata != nil {
 			if val, ok := host.Metadata["Test"]; ok && val == "go-sdk-host" {
-				task, err := client.Hosts.Delete(host.ID)
+				task, err := client.InfraHosts.Delete(host.ID)
 				task, err = client.Tasks.Wait(task.ID)
 				if err != nil {
 					GinkgoT().Log(err)
@@ -212,13 +232,13 @@ func cleanHosts(client *Client) {
 }
 
 func cleanSubnets(client *Client) {
-	networks, err := client.Subnets.GetAll(&SubnetGetOptions{})
+	subnets, err := client.Subnets.GetAll(&SubnetGetOptions{})
 	if err != nil {
 		GinkgoT().Log(err)
 	}
-	for _, network := range networks.Items {
-		if strings.HasPrefix(network.Name, "go-sdk-network-") {
-			task, err := client.Subnets.Delete(network.ID)
+	for _, subnet := range subnets.Items {
+		if strings.HasPrefix(subnet.Name, "go-sdk-network-") {
+			task, err := client.Subnets.Delete(subnet.ID)
 			task, err = client.Tasks.Wait(task.ID)
 			if err != nil {
 				GinkgoT().Log(err)
@@ -227,34 +247,14 @@ func cleanSubnets(client *Client) {
 	}
 }
 
-func cleanVirtualSubnets(client *Client, projectId string) {
-	subnets, err := client.VirtualSubnets.GetAll(projectId, &VirtualSubnetGetOptions{})
-	if err != nil {
-		GinkgoT().Log(err)
-		return
-	}
-
-	for _, subnet := range subnets.Items {
-		if strings.HasPrefix(subnet.Name, "go-sdk-virtual-network-") {
-			task, err := client.VirtualSubnets.Delete(subnet.ID)
-			if err == nil {
-				task, err = client.Tasks.Wait(task.ID)
-				if err != nil {
-					GinkgoT().Log(err)
-				}
-			}
-		}
-	}
-}
-
-func cleanClusters(client *Client, projID string) {
-	clusters, err := client.Projects.GetClusters(projID)
+func cleanServices(client *Client, projID string) {
+	services, err := client.Projects.GetServices(projID)
 	if err != nil {
 		GinkgoT().Log(err)
 	}
-	for _, cluster := range clusters.Items {
-		if strings.HasPrefix(cluster.Name, "go-sdk-cluster-") {
-			task, err := client.Clusters.Delete(cluster.ID)
+	for _, service := range services.Items {
+		if strings.HasPrefix(service.Name, "go-sdk-service-") {
+			task, err := client.Services.Delete(service.ID)
 			task, err = client.Tasks.Wait(task.ID)
 			if err != nil {
 				GinkgoT().Log(err)
