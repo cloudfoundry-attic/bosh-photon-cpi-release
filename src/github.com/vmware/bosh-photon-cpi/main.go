@@ -24,6 +24,8 @@ import (
 	"strings"
 )
 
+const rootUrl string = "/v1"
+
 func main() {
 	actions := map[string]cpi.ActionFn{
 		"create_stemcell": CreateStemcell,

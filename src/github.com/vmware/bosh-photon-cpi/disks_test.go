@@ -10,13 +10,13 @@
 package main
 
 import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"github.com/vmware/bosh-photon-cpi/cmd"
 	"github.com/vmware/bosh-photon-cpi/cpi"
 	"github.com/vmware/bosh-photon-cpi/logger"
 	. "github.com/vmware/bosh-photon-cpi/mocks"
 	ec "github.com/vmware/photon-controller-go-sdk/photon"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
@@ -81,15 +81,15 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"fake-vm-id",
+				server.URL+rootUrl+"/vms/"+"fake-vm-id",
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/projects/"+projID+"/disks",
+				server.URL+rootUrl+"/projects/"+projID+"/disks",
 				CreateResponder(200, ToJson(createTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+createTask.ID,
+				server.URL+rootUrl+"/tasks/"+createTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -109,11 +109,11 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"POST",
-				server.URL+"/projects/"+projID+"/disks",
+				server.URL+rootUrl+"/projects/"+projID+"/disks",
 				CreateResponder(200, ToJson(createTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+createTask.ID,
+				server.URL+rootUrl+"/tasks/"+createTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -133,11 +133,11 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"POST",
-				server.URL+"/projects/"+projID+"/disks",
+				server.URL+rootUrl+"/projects/"+projID+"/disks",
 				CreateResponder(500, ToJson(createTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+createTask.ID,
+				server.URL+rootUrl+"/tasks/"+createTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -185,15 +185,15 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/disks/"+deleteTask.Entity.ID,
+				server.URL+rootUrl+"/disks/"+deleteTask.Entity.ID,
 				CreateResponder(200, ToJson(disk)))
 			RegisterResponder(
 				"DELETE",
-				server.URL+"/disks/"+deleteTask.Entity.ID,
+				server.URL+rootUrl+"/disks/"+deleteTask.Entity.ID,
 				CreateResponder(200, ToJson(deleteTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+deleteTask.ID,
+				server.URL+rootUrl+"/tasks/"+deleteTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -208,11 +208,11 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("returns an error when apife returns 404", func() {
-			apiError := ec.ApiError{HttpStatusCode: 404, Code: "DiskNotFound", Message:""}
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "DiskNotFound", Message: ""}
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/disks/"+"fake-disk-id",
+				server.URL+rootUrl+"/disks/"+"fake-disk-id",
 				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
@@ -253,11 +253,11 @@ var _ = Describe("Disk", func() {
 		})
 		Context("when auth is enabled", func() {
 			It("should return false when disk not found", func() {
-				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message: ""}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/disks/"+"fake-disk-id",
+					server.URL+rootUrl+"/disks/"+"fake-disk-id",
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
@@ -281,7 +281,7 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/disks/"+disk.ID,
+				server.URL+rootUrl+"/disks/"+disk.ID,
 				CreateResponder(200, ToJson(disk)))
 
 			actions := map[string]cpi.ActionFn{
@@ -300,7 +300,7 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/disks/"+disk.ID,
+				server.URL+rootUrl+"/disks/"+disk.ID,
 				CreateResponder(404, ToJson(disk)))
 
 			actions := map[string]cpi.ActionFn{
@@ -319,7 +319,7 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/disks/"+disk.ID,
+				server.URL+rootUrl+"/disks/"+disk.ID,
 				CreateResponder(500, ToJson(disk)))
 
 			actions := map[string]cpi.ActionFn{
@@ -359,11 +359,11 @@ var _ = Describe("Disk", func() {
 		})
 		Context("when auth is enabled", func() {
 			It("should return false when disk not found", func() {
-				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message: ""}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/disks/"+"fake-disk-id",
+					server.URL+rootUrl+"/disks/"+"fake-disk-id",
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
@@ -396,11 +396,11 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"vm-2",
+				server.URL+rootUrl+"/vms/"+"vm-2",
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/projects/"+projID+"/disks",
+				server.URL+rootUrl+"/projects/"+projID+"/disks",
 				CreateResponder(200, ToJson(list)))
 
 			actions := map[string]cpi.ActionFn{
@@ -425,11 +425,11 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"vm-2",
+				server.URL+rootUrl+"/vms/"+"vm-2",
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/projects/"+projID+"/disks",
+				server.URL+rootUrl+"/projects/"+projID+"/disks",
 				CreateResponder(200, ToJson(list)))
 
 			actions := map[string]cpi.ActionFn{
@@ -448,7 +448,7 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/projects/"+projID+"/disks",
+				server.URL+rootUrl+"/projects/"+projID+"/disks",
 				CreateResponder(500, ToJson(list)))
 
 			actions := map[string]cpi.ActionFn{
@@ -463,11 +463,11 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("returns an error when VM not found", func() {
-			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message:""}
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message: ""}
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"fake-vm-id",
+				server.URL+rootUrl+"/vms/"+"fake-vm-id",
 				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
@@ -484,11 +484,11 @@ var _ = Describe("Disk", func() {
 		})
 		Context("when auth is enabled", func() {
 			It("returns an error when VM not found", func() {
-				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message: ""}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/vms/"+"fake-vm-id",
+					server.URL+rootUrl+"/vms/"+"fake-vm-id",
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
@@ -526,44 +526,44 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"fake-vm-id",
+				server.URL+rootUrl+"/vms/"+"fake-vm-id",
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/disks/"+"fake-disk-id",
+				server.URL+rootUrl+"/disks/"+"fake-disk-id",
 				CreateResponder(200, ToJson(disk)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/fake-vm-id/attach_disk",
+				server.URL+rootUrl+"/vms/fake-vm-id/attach_disk",
 				CreateResponder(200, ToJson(attachTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/fake-vm-id/attach_iso",
+				server.URL+rootUrl+"/vms/fake-vm-id/attach_iso",
 				CreateResponder(200, ToJson(isoTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/fake-vm-id/detach_iso",
+				server.URL+rootUrl+"/vms/fake-vm-id/detach_iso",
 				CreateResponder(200, ToJson(detachIsoTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/fake-vm-id/set_metadata",
+				server.URL+rootUrl+"/vms/fake-vm-id/set_metadata",
 				CreateResponder(200, ToJson(metadataTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/fake-vm-id",
+				server.URL+rootUrl+"/vms/fake-vm-id",
 				CreateResponder(200, ToJson(vm)))
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+attachTask.ID,
+				server.URL+rootUrl+"/tasks/"+attachTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+isoTask.ID,
+				server.URL+rootUrl+"/tasks/"+isoTask.ID,
 				CreateResponder(200, ToJson(isoCompletedTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+detachIsoTask.ID,
+				server.URL+rootUrl+"/tasks/"+detachIsoTask.ID,
 				CreateResponder(200, ToJson(detachCompletedTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -578,11 +578,11 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("returns an error when VM not found", func() {
-			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message:""}
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message: ""}
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"fake-vm-id",
+				server.URL+rootUrl+"/vms/"+"fake-vm-id",
 				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
@@ -598,16 +598,16 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("returns an error when disk not found", func() {
-			apiError := ec.ApiError{HttpStatusCode: 404, Code: "DiskNotFound", Message:""}
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "DiskNotFound", Message: ""}
 			vm := &ec.VM{ID: "fake-vm-id"}
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"fake-vm-id",
+				server.URL+rootUrl+"/vms/"+"fake-vm-id",
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/disks/"+"fake-disk-id",
+				server.URL+rootUrl+"/disks/"+"fake-disk-id",
 				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
@@ -624,11 +624,11 @@ var _ = Describe("Disk", func() {
 		})
 		Context("when auth is enabled", func() {
 			It("returns an error when VM not found", func() {
-				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message: ""}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/vms/"+"fake-vm-id",
+					server.URL+rootUrl+"/vms/"+"fake-vm-id",
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
@@ -644,16 +644,16 @@ var _ = Describe("Disk", func() {
 				Expect(res.Log).ShouldNot(BeEmpty())
 			})
 			It("returns an error when disk not found", func() {
-				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message: ""}
 				vm := &ec.VM{ID: "fake-vm-id"}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/vms/"+"fake-vm-id",
+					server.URL+rootUrl+"/vms/"+"fake-vm-id",
 					CreateResponder(200, ToJson(vm)))
 				RegisterResponder(
 					"GET",
-					server.URL+"/disks/"+"fake-disk-id",
+					server.URL+rootUrl+"/disks/"+"fake-disk-id",
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
@@ -672,7 +672,7 @@ var _ = Describe("Disk", func() {
 	})
 	Describe("DetachDisk", func() {
 		It("returns nothing when detach succeeds", func() {
-			disk := &ec.PersistentDisk{Flavor: "persistent-disk", ID: "fake-disk-id", VMs:[]string{"fake-vm-id"}}
+			disk := &ec.PersistentDisk{Flavor: "persistent-disk", ID: "fake-disk-id", VMs: []string{"fake-vm-id"}}
 
 			attachTask := &ec.Task{Operation: "DETACH_DISK", State: "QUEUED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
 			completedTask := &ec.Task{Operation: "DETACH_DISK", State: "COMPLETED", ID: "fake-task-id", Entity: ec.Entity{ID: "fake-disk-id"}}
@@ -692,40 +692,40 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/fake-vm-id",
+				server.URL+rootUrl+"/vms/fake-vm-id",
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/disks/"+disk.ID,
+				server.URL+rootUrl+"/disks/"+disk.ID,
 				CreateResponder(200, ToJson(disk)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/fake-vm-id/detach_disk",
+				server.URL+rootUrl+"/vms/fake-vm-id/detach_disk",
 				CreateResponder(200, ToJson(attachTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/fake-vm-id/attach_iso",
+				server.URL+rootUrl+"/vms/fake-vm-id/attach_iso",
 				CreateResponder(200, ToJson(isoTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/fake-vm-id/detach_iso",
+				server.URL+rootUrl+"/vms/fake-vm-id/detach_iso",
 				CreateResponder(200, ToJson(detachIsoTask)))
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/fake-vm-id/set_metadata",
+				server.URL+rootUrl+"/vms/fake-vm-id/set_metadata",
 				CreateResponder(200, ToJson(metadataTask)))
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+attachTask.ID,
+				server.URL+rootUrl+"/tasks/"+attachTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+isoTask.ID,
+				server.URL+rootUrl+"/tasks/"+isoTask.ID,
 				CreateResponder(200, ToJson(isoCompletedTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+detachIsoTask.ID,
+				server.URL+rootUrl+"/tasks/"+detachIsoTask.ID,
 				CreateResponder(200, ToJson(detachCompletedTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -740,11 +740,11 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("returns an error when VM not found", func() {
-			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message:""}
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "VMNotFound", Message: ""}
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"fake-vm-id",
+				server.URL+rootUrl+"/vms/"+"fake-vm-id",
 				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
@@ -760,16 +760,16 @@ var _ = Describe("Disk", func() {
 			Expect(res.Log).ShouldNot(BeEmpty())
 		})
 		It("returns error when disk not found", func() {
-			apiError := ec.ApiError{HttpStatusCode: 404, Code: "DiskNotFound", Message:""}
+			apiError := ec.ApiError{HttpStatusCode: 404, Code: "DiskNotFound", Message: ""}
 			vm := &ec.VM{ID: "fake-vm-id"}
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"fake-vm-id",
+				server.URL+rootUrl+"/vms/"+"fake-vm-id",
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/disks/"+"fake-disk-id",
+				server.URL+rootUrl+"/disks/"+"fake-disk-id",
 				CreateResponder(404, ToJson(apiError)))
 
 			actions := map[string]cpi.ActionFn{
@@ -790,11 +790,11 @@ var _ = Describe("Disk", func() {
 
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+"fake-vm-id",
+				server.URL+rootUrl+"/vms/"+"fake-vm-id",
 				CreateResponder(200, ToJson(vm)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/disks/"+"fake-disk-id",
+				server.URL+rootUrl+"/disks/"+"fake-disk-id",
 				CreateResponder(200, ToJson(disk)))
 
 			actions := map[string]cpi.ActionFn{
@@ -811,11 +811,11 @@ var _ = Describe("Disk", func() {
 		})
 		Context("when auth is enabled", func() {
 			It("returns an error when VM not found", func() {
-				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message: ""}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/vms/"+"fake-vm-id",
+					server.URL+rootUrl+"/vms/"+"fake-vm-id",
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
@@ -832,15 +832,15 @@ var _ = Describe("Disk", func() {
 			})
 			It("should return error when disk not found", func() {
 				vm := &ec.VM{ID: "fake-vm-id"}
-				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message:""}
+				apiError := ec.ApiError{HttpStatusCode: 403, Code: "AccessForbidden", Message: ""}
 
 				RegisterResponder(
 					"GET",
-					server.URL+"/vms/"+"fake-vm-id",
+					server.URL+rootUrl+"/vms/"+"fake-vm-id",
 					CreateResponder(200, ToJson(vm)))
 				RegisterResponder(
 					"GET",
-					server.URL+"/disks/"+"fake-disk-id",
+					server.URL+rootUrl+"/disks/"+"fake-disk-id",
 					CreateResponder(403, ToJson(apiError)))
 
 				actions := map[string]cpi.ActionFn{
