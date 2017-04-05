@@ -52,6 +52,9 @@ type bodyRewinder func() io.Reader
 
 const appJson string = "application/json"
 
+// Root URL specifies the API version.
+const rootUrl string = "/v1"
+
 // From https://golang.org/src/mime/multipart/writer.go
 var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
 
@@ -131,22 +134,37 @@ func (client *restClient) GetList(endpoint string, url string, tokens *TokenOpti
 }
 
 func (client *restClient) Post(url string, contentType string, body io.ReadSeeker, tokens *TokenOptions) (res *http.Response, err error) {
-	if contentType == "" {
-		contentType = appJson
-	}
+	res, err = client.SendRequestCommon("POST", url, contentType, body, tokens)
+	return
+}
 
-	req := request{"POST", url, contentType, body, tokens}
-	rewinder := func() io.Reader {
-		body.Seek(0, 0)
-		return body
-	}
-	res, err = client.SendRequest(&req, rewinder)
+func (client *restClient) Patch(url string, contentType string, body io.ReadSeeker, tokens *TokenOptions) (res *http.Response, err error) {
+	res, err = client.SendRequestCommon("PATCH", url, contentType, body, tokens)
+	return
+}
+
+func (client *restClient) Put(url string, contentType string, body io.ReadSeeker, tokens *TokenOptions) (res *http.Response, err error) {
+	res, err = client.SendRequestCommon("PUT", url, contentType, body, tokens)
 	return
 }
 
 func (client *restClient) Delete(url string, tokens *TokenOptions) (res *http.Response, err error) {
 	req := request{"DELETE", url, "", nil, tokens}
 	res, err = client.SendRequest(&req, nil)
+	return
+}
+
+func (client *restClient) SendRequestCommon(method string, url string, contentType string, body io.ReadSeeker, tokens *TokenOptions) (res *http.Response, err error) {
+	if contentType == "" {
+		contentType = appJson
+	}
+
+	req := request{method, url, contentType, body, tokens}
+	rewinder := func() io.Reader {
+		body.Seek(0, 0)
+		return body
+	}
+	res, err = client.SendRequest(&req, rewinder)
 	return
 }
 

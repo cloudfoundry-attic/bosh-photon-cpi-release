@@ -10,12 +10,12 @@
 package main
 
 import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"github.com/vmware/bosh-photon-cpi/cpi"
 	"github.com/vmware/bosh-photon-cpi/logger"
 	. "github.com/vmware/bosh-photon-cpi/mocks"
 	ec "github.com/vmware/photon-controller-go-sdk/photon"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"net/http"
 	"net/http/httptest"
 )
@@ -48,11 +48,11 @@ var _ = Describe("Stemcell", func() {
 
 			RegisterResponder(
 				"POST",
-				server.URL+"/images",
+				server.URL+rootUrl+"/images",
 				CreateResponder(200, ToJson(createTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+createTask.ID,
+				server.URL+rootUrl+"/tasks/"+createTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -73,11 +73,11 @@ var _ = Describe("Stemcell", func() {
 
 			RegisterResponder(
 				"POST",
-				server.URL+"/images",
+				server.URL+rootUrl+"/images",
 				CreateResponder(500, ToJson(createTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+createTask.ID,
+				server.URL+rootUrl+"/tasks/"+createTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -137,11 +137,11 @@ var _ = Describe("Stemcell", func() {
 
 			RegisterResponder(
 				"DELETE",
-				server.URL+"/images/"+deleteTask.Entity.ID,
+				server.URL+rootUrl+"/images/"+deleteTask.Entity.ID,
 				CreateResponder(200, ToJson(deleteTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+deleteTask.ID,
+				server.URL+rootUrl+"/tasks/"+deleteTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 
 			actions := map[string]cpi.ActionFn{
@@ -161,11 +161,11 @@ var _ = Describe("Stemcell", func() {
 
 			RegisterResponder(
 				"DELETE",
-				server.URL+"/images/"+deleteTask.Entity.ID,
+				server.URL+rootUrl+"/images/"+deleteTask.Entity.ID,
 				CreateResponder(404, ToJson(deleteTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/tasks/"+deleteTask.ID,
+				server.URL+rootUrl+"/tasks/"+deleteTask.ID,
 				CreateResponder(200, ToJson(completedTask)))
 
 			actions := map[string]cpi.ActionFn{

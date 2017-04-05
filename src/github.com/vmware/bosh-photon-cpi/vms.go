@@ -63,7 +63,7 @@ func ParseDiskCIDList(diskCIDList []interface{}) (affinities []ec.LocalitySpec, 
 }
 
 func ParseNetworks(networks map[string]interface{}) (networkList []string, err error) {
-	for  _, network := range networks {
+	for _, network := range networks {
 		networkMap, ok := network.(map[string]interface{})
 		if !ok {
 			err = errors.New("error in networks")
@@ -161,8 +161,8 @@ func CreateVM(ctx *cpi.Context, args []interface{}) (result interface{}, err err
 				BootDisk:   false,
 			},
 		},
-		Affinities:     affinities,
-		Subnets:       networkList,
+		Affinities: affinities,
+		Subnets:    networkList,
 	}
 	ctx.Logger.Infof("Creating VM with spec: %#v", spec)
 	vmTask, err := ctx.Client.Projects.CreateVM(ctx.Config.Photon.ProjectID, spec)
