@@ -21,27 +21,29 @@ import (
 
 // Represents stateless context needed to call photon APIs.
 type Client struct {
-	options           ClientOptions
-	restClient        *restClient
-	logger            *log.Logger
-	Endpoint          string
-	Status            *StatusAPI
-	Tenants           *TenantsAPI
-	Tasks             *TasksAPI
-	Projects          *ProjectsAPI
-	Flavors           *FlavorsAPI
-	Images            *ImagesAPI
-	Disks             *DisksAPI
-	VMs               *VmAPI
-	Hosts             *HostsAPI
-	Deployments       *DeploymentsAPI
-	ResourceTickets   *ResourceTicketsAPI
-	Subnets           *SubnetsAPI
-	VirtualSubnets    *VirtualSubnetsAPI
-	Clusters          *ClustersAPI
-	Auth              *AuthAPI
-	AvailabilityZones *AvailabilityZonesAPI
-	Info              *InfoAPI
+	options     ClientOptions
+	restClient  *restClient
+	logger      *log.Logger
+	Endpoint    string
+	Tenants     *TenantsAPI
+	Tasks       *TasksAPI
+	Projects    *ProjectsAPI
+	Flavors     *FlavorsAPI
+	Images      *ImagesAPI
+	Disks       *DisksAPI
+	VMs         *VmAPI
+	Hosts       *HostsAPI
+	Datastores  *DatastoresAPI
+	Deployments *DeploymentsAPI
+	Services    *ServicesAPI
+	Auth        *AuthAPI
+	Info        *InfoAPI
+	Routers     *RoutersAPI
+	Subnets     *SubnetsAPI
+	System      *SystemAPI
+	Zones       *ZonesAPI
+	Infra       *InfraAPI
+	InfraHosts  *InfraHostsAPI
 }
 
 // Represents Tokens
@@ -150,7 +152,6 @@ func NewClient(endpoint string, options *ClientOptions, logger *log.Logger) (c *
 	// Ensure a copy of options is made, rather than using a pointer
 	// which may change out from underneath if misused by the caller.
 	c.options = *defaultOptions
-	c.Status = &StatusAPI{c}
 	c.Tenants = &TenantsAPI{c}
 	c.Tasks = &TasksAPI{c}
 	c.Projects = &ProjectsAPI{c}
@@ -159,14 +160,17 @@ func NewClient(endpoint string, options *ClientOptions, logger *log.Logger) (c *
 	c.Disks = &DisksAPI{c}
 	c.VMs = &VmAPI{c}
 	c.Hosts = &HostsAPI{c}
+	c.Datastores = &DatastoresAPI{c}
 	c.Deployments = &DeploymentsAPI{c}
-	c.ResourceTickets = &ResourceTicketsAPI{c}
-	c.Subnets = &SubnetsAPI{c}
-	c.VirtualSubnets = &VirtualSubnetsAPI{c}
-	c.Clusters = &ClustersAPI{c}
+	c.Services = &ServicesAPI{c}
 	c.Auth = &AuthAPI{c}
-	c.AvailabilityZones = &AvailabilityZonesAPI{c}
 	c.Info = &InfoAPI{c}
+	c.Routers = &RoutersAPI{c}
+	c.Subnets = &SubnetsAPI{c}
+	c.System = &SystemAPI{c}
+	c.Zones = &ZonesAPI{c}
+	c.Infra = &InfraAPI{c}
+	c.InfraHosts = &InfraHostsAPI{c}
 
 	// Tell the restClient about the Auth API so it can request new
 	// acces tokens when they expire

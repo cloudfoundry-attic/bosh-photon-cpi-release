@@ -1,4 +1,4 @@
-// Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+// Copyright (c) 2017 VMware, Inc. All Rights Reserved.
 //
 // This product is licensed to you under the Apache License, Version 2.0 (the "License").
 // You may not use this product except in compliance with the License.
@@ -14,20 +14,20 @@ import (
 	"encoding/json"
 )
 
-// Contains functionality for networks API.
+// Contains functionality for subnets API.
 type SubnetsAPI struct {
 	client *Client
 }
 
-// Options used for GetAll API
+// Options for GetSubnets API.
 type SubnetGetOptions struct {
 	Name string `urlParam:"name"`
 }
 
-var subnetUrl string = "/subnets"
+var subnetUrl string = rootUrl + "/subnets"
 
-// Creates a network.
-func (api *SubnetsAPI) Create(networkSpec *SubnetCreateSpec) (task *Task, err error) {
+// Creates a portgroup.
+func (api *SubnetsAPI) Create(networkSpec *NetworkCreateSpec) (task *Task, err error) {
 	body, err := json.Marshal(networkSpec)
 	if err != nil {
 		return
@@ -45,19 +45,21 @@ func (api *SubnetsAPI) Create(networkSpec *SubnetCreateSpec) (task *Task, err er
 	return
 }
 
-// Deletes a network with specified ID.
+// Deletes a subnet with the specified ID.
 func (api *SubnetsAPI) Delete(id string) (task *Task, err error) {
 	res, err := api.client.restClient.Delete(api.client.Endpoint+subnetUrl+"/"+id, api.client.options.TokenOptions)
 	if err != nil {
 		return
 	}
+
 	defer res.Body.Close()
+
 	task, err = getTask(getError(res))
 	return
 }
 
-// Gets a network with the specified ID.
-func (api *SubnetsAPI) Get(id string) (network *Subnet, err error) {
+// Gets a subnet with the specified ID.
+func (api *SubnetsAPI) Get(id string) (subnet *Subnet, err error) {
 	res, err := api.client.restClient.Get(api.client.Endpoint+subnetUrl+"/"+id, api.client.options.TokenOptions)
 	if err != nil {
 		return
@@ -72,7 +74,28 @@ func (api *SubnetsAPI) Get(id string) (network *Subnet, err error) {
 	return &result, nil
 }
 
-// Returns all networks
+// Updates subnet's attributes.
+func (api *SubnetsAPI) Update(id string, subnetSpec *SubnetUpdateSpec) (task *Task, err error) {
+	body, err := json.Marshal(subnetSpec)
+	if err != nil {
+		return
+	}
+
+	res, err := api.client.restClient.Patch(
+		api.client.Endpoint+subnetUrl+"/"+id,
+		"application/json",
+		bytes.NewReader(body),
+		api.client.options.TokenOptions)
+	if err != nil {
+		return
+	}
+
+	defer res.Body.Close()
+	task, err = getTask(getError(res))
+	return
+}
+
+// Returns all subnets
 func (api *SubnetsAPI) GetAll(options *SubnetGetOptions) (result *Subnets, err error) {
 	uri := api.client.Endpoint + subnetUrl
 	if options != nil {
@@ -85,7 +108,7 @@ func (api *SubnetsAPI) GetAll(options *SubnetGetOptions) (result *Subnets, err e
 	return
 }
 
-// Sets default network.
+// Sets default subnet.
 func (api *SubnetsAPI) SetDefault(id string) (task *Task, err error) {
 	res, err := api.client.restClient.Post(
 		api.client.Endpoint+subnetUrl+"/"+id+"/set_default",
