@@ -1,3 +1,4 @@
-c3a655f github.com/onsi/ginkgo/.git
-7ce781e github.com/onsi/gomega/.git
-b659055 github.com/vmware/photon-controller-go-sdk/.git
+77a8c1e github.com/onsi/ginkgo/.git
+334b8f4 github.com/onsi/gomega/.git
+a220e92 github.com/vmware/photon-controller-go-sdk/.git
+a3f3340 gopkg.in/yaml.v2/.git

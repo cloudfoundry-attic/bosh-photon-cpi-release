@@ -15,6 +15,8 @@ import (
 	"testing"
 )
 
+const rootUrl = "/v1"
+
 func TestDispatch(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Main Suite")
