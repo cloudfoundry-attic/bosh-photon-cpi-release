@@ -10,13 +10,13 @@
 package main
 
 import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"github.com/vmware/bosh-photon-cpi/cmd"
 	"github.com/vmware/bosh-photon-cpi/cpi"
 	"github.com/vmware/bosh-photon-cpi/logger"
 	. "github.com/vmware/bosh-photon-cpi/mocks"
 	ec "github.com/vmware/photon-controller-go-sdk/photon"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -74,11 +74,11 @@ var _ = Describe("AgentEnv", func() {
 
 			RegisterResponder(
 				"POST",
-				server.URL+"/vms/"+vmID+"/set_metadata",
+				server.URL+rootUrl+"/vms/"+vmID+"/set_metadata",
 				CreateResponder(200, ToJson(metadataTask)))
 			RegisterResponder(
 				"GET",
-				server.URL+"/vms/"+vmID,
+				server.URL+rootUrl+"/vms/"+vmID,
 				CreateResponder(200, ToJson(vm)))
 
 			err := putAgentEnvMetadata(ctx, vmID, env)
