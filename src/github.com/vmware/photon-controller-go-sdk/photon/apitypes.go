@@ -143,6 +143,13 @@ type QuotaLineItem struct {
 	Key   string  `json:"key"`
 }
 
+// The QuotaLineItem with limit and usage in one place.
+type QuotaStatusLineItem struct {
+	Unit  string  `json:"unit"`
+	Limit float64 `json:"limit"`
+	Usage float64 `json:"usage"`
+}
+
 // Creation spec for locality.
 type LocalitySpec struct {
 	Kind string `json:"kind"`
@@ -181,9 +188,10 @@ type DiskList struct {
 
 // Creation spec for projects.
 type ProjectCreateSpec struct {
-	ResourceTicket ResourceTicketReservation `json:"resourceTicket"`
-	Name           string                    `json:"name"`
-	SecurityGroups []string                  `json:"securityGroups,omitempty"`
+	Name                       string   `json:"name"`
+	SecurityGroups             []string `json:"securityGroups,omitempty"`
+	DefaultRouterPrivateIpCidr string   `json:"defaultRouterPrivateIpCidr,omitempty"`
+	ResourceQuota              Quota    `json:"quota,omitempty"`
 }
 
 // Represents multiple projects returned by the API.
@@ -194,19 +202,12 @@ type ProjectList struct {
 // Compact representation of projects.
 type ProjectCompact struct {
 	Kind           string          `json:"kind"`
-	ResourceTicket ProjectTicket   `json:"resourceTicket"`
 	Name           string          `json:"name"`
 	ID             string          `json:"id"`
 	Tags           []string        `json:"tags"`
 	SelfLink       string          `json:"selfLink"`
 	SecurityGroups []SecurityGroup `json:"securityGroups"`
-}
-
-type ProjectTicket struct {
-	TenantTicketID   string          `json:"tenantTicketId"`
-	Usage            []QuotaLineItem `json:"usage"`
-	TenantTicketName string          `json:"tenantTicketName"`
-	Limits           []QuotaLineItem `json:"limits"`
+	ResourceQuota  Quota           `json:"quota,omitempty"`
 }
 
 // Represents an image.
@@ -217,6 +218,7 @@ type Image struct {
 	State               string         `json:"state"`
 	ID                  string         `json:"id"`
 	Tags                []string       `json:"tags"`
+	Scope               ImageScope     `json:"scope"`
 	SelfLink            string         `json:"selfLink"`
 	Settings            []ImageSetting `json:"settings"`
 	ReplicationType     string         `json:"replicationType"`
@@ -224,7 +226,13 @@ type Image struct {
 	SeedingProgress     string         `json:"seedingProgress"`
 }
 
-// Represents an image setting
+// Represents an image scope.
+type ImageScope struct {
+	Kind string `json:"kind"`
+	ID   string `json:"id"`
+}
+
+// Represents an image setting.
 type ImageSetting struct {
 	Name         string `json:"name"`
 	DefaultValue string `json:"defaultValue"`
@@ -255,14 +263,14 @@ type Status struct {
 
 // Represents a single tenant.
 type Tenant struct {
-	Projects        []BaseCompact   `json:"projects"`
-	ResourceTickets []BaseCompact   `json:"resourceTickets"`
-	Kind            string          `json:"kind"`
-	Name            string          `json:"name"`
-	ID              string          `json:"id"`
-	SelfLink        string          `json:"selfLink"`
-	Tags            []string        `json:"tags"`
-	SecurityGroups  []SecurityGroup `json:"securityGroups"`
+	Projects       []BaseCompact   `json:"projects"`
+	Kind           string          `json:"kind"`
+	Name           string          `json:"name"`
+	ID             string          `json:"id"`
+	SelfLink       string          `json:"selfLink"`
+	Tags           []string        `json:"tags"`
+	SecurityGroups []SecurityGroup `json:"securityGroups"`
+	ResourceQuota  Quota           `json:"quota,omitempty"`
 }
 
 // Represents multiple tenants returned by the API.
@@ -274,36 +282,16 @@ type Tenants struct {
 type TenantCreateSpec struct {
 	Name           string   `json:"name"`
 	SecurityGroups []string `json:"securityGroups,omitempty"`
+	ResourceQuota  Quota    `json:"quota,omitempty"`
 }
 
-// Creation spec for resource tickets.
-type ResourceTicketCreateSpec struct {
-	Name   string          `json:"name"`
-	Limits []QuotaLineItem `json:"limits"`
+// Represents the quota
+type Quota struct {
+	QuotaLineItems map[string]QuotaStatusLineItem `json:"quotaItems"`
 }
 
-// Represents a single resource ticket.
-type ResourceTicket struct {
-	Kind     string          `json:"kind"`
-	Usage    []QuotaLineItem `json:"usage"`
-	TenantId string          `json:"tenantId"`
-	Name     string          `json:"name"`
-	ID       string          `json:"id"`
-	Limits   []QuotaLineItem `json:"limits"`
-	Tags     []string        `json:"tags"`
-	SelfLink string          `json:"selfLink"`
-}
-
-// Represents multiple resource tickets returned by the API.
-type ResourceList struct {
-	Items []ResourceTicket `json:"items"`
-}
-
-// Represents a resource reservation on a resource ticket.
-type ResourceTicketReservation struct {
-	Name   string          `json:"name"`
-	Limits []QuotaLineItem `json:"limits"`
-}
+// QuotaSpec is used when set/update/excluding QuotaLineItems from existing Quota
+type QuotaSpec map[string]QuotaStatusLineItem
 
 // Creation spec for VMs.
 type VmCreateSpec struct {
@@ -413,27 +401,27 @@ type FlavorList struct {
 
 // Creation spec for hosts.
 type HostCreateSpec struct {
-	Username         string            `json:"username"`
-	Password         string            `json:"password"`
-	AvailabilityZone string            `json:"availabilityZone,omitempty"`
-	Metadata         map[string]string `json:"metadata,omitempty"`
-	Address          string            `json:"address"`
-	Tags             []string          `json:"usageTags"`
+	Username string            `json:"username"`
+	Password string            `json:"password"`
+	Zone     string            `json:"zone,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
+	Address  string            `json:"address"`
+	Tags     []string          `json:"usageTags"`
 }
 
 // Represents a host
 type Host struct {
-	Username         string            `json:"username"`
-	Password         string            `json:"password"`
-	Address          string            `json:"address"`
-	Kind             string            `json:"kind"`
-	ID               string            `json:"id"`
-	AvailabilityZone string            `json:"availabilityZone,omitempty"`
-	Tags             []string          `json:"usageTags"`
-	Metadata         map[string]string `json:"metadata,omitempty"`
-	SelfLink         string            `json:"selfLink"`
-	State            string            `json:"state"`
-	EsxVersion       string            `json:"esxVersion"`
+	Username   string            `json:"username"`
+	Password   string            `json:"password"`
+	Address    string            `json:"address"`
+	Kind       string            `json:"kind"`
+	ID         string            `json:"id"`
+	Zone       string            `json:"zone,omitempty"`
+	Tags       []string          `json:"usageTags"`
+	Metadata   map[string]string `json:"metadata,omitempty"`
+	SelfLink   string            `json:"selfLink"`
+	State      string            `json:"state"`
+	EsxVersion string            `json:"esxVersion"`
 }
 
 // Represents multiple hosts returned by the API.
@@ -441,12 +429,33 @@ type Hosts struct {
 	Items []Host `json:"items"`
 }
 
-type MigrationStatus struct {
-	CompletedDataMigrationCycles int `json:"completedDataMigrationCycles"`
-	DataMigrationCycleProgress   int `json:"dataMigrationCycleProgress"`
-	DataMigrationCycleSize       int `json:"dataMigrationCycleSize"`
-	VibsUploaded                 int `json:"vibsUploaded"`
-	VibsUploading                int `json:"vibsUploading"`
+type Datastore struct {
+	Kind     string   `json:"kind"`
+	Type     string   `json:"type"`
+	Tags     []string `json:"tags,omitempty"`
+	ID       string   `json:"id"`
+	SelfLink string   `json:"selfLink"`
+}
+
+type Datastores struct {
+	Items []Datastore `json:"items"`
+}
+
+// Creation spec for deployments.
+type DeploymentCreateSpec struct {
+	NTPEndpoint             interface{}                     `json:"ntpEndpoint"`
+	UseImageDatastoreForVms bool                            `json:"useImageDatastoreForVms"`
+	SyslogEndpoint          interface{}                     `json:"syslogEndpoint"`
+	Stats                   *StatsInfo                      `json:"stats"`
+	ImageDatastores         []string                        `json:"imageDatastores"`
+	Auth                    *AuthInfo                       `json:"auth"`
+	NetworkConfiguration    *NetworkConfigurationCreateSpec `json:"networkConfiguration"`
+	LoadBalancerEnabled     bool                            `json:"loadBalancerEnabled"`
+}
+
+// Deployment deploy config.
+type DeploymentDeployOperation struct {
+	DesiredState string `json:"desiredState"`
 }
 
 // Represents a deployment
@@ -462,25 +471,23 @@ type Deployment struct {
 	ID                      string                 `json:"id"`
 	ImageDatastores         []string               `json:"imageDatastores"`
 	SelfLink                string                 `json:"selfLink"`
-	Migration               *MigrationStatus       `json:"migrationStatus,omitempty"`
-	ClusterConfigurations   []ClusterConfiguration `json:"clusterConfigurations,omitempty"`
+	ServiceConfigurations   []ServiceConfiguration `json:"serviceConfigurations,omitempty"`
 	LoadBalancerEnabled     bool                   `json:"loadBalancerEnabled"`
 	LoadBalancerAddress     string                 `json:"loadBalancerAddress"`
+}
+
+type DeploymentSize struct {
+	NumberHosts      int `json:"numberHosts"`
+	NumberVMs        int `json:"numberVMs"`
+	NumberTenants    int `json:"numberTenants"`
+	NumberProjects   int `json:"numberProjects"`
+	NumberDatastores int `json:"numberDatastores"`
+	NumberServices   int `json:"numberServices"`
 }
 
 // Represents multiple deployments returned by the API.
 type Deployments struct {
 	Items []Deployment `json:"items"`
-}
-
-// Represents source load balacer address to migrate deployment
-type InitializeMigrationOperation struct {
-	SourceNodeGroupReference string `json:"sourceNodeGroupReference"`
-}
-
-// Represents source load balacer address to finish migration of deployment
-type FinalizeMigrationOperation struct {
-	SourceNodeGroupReference string `json:"sourceNodeGroupReference"`
 }
 
 // Represents stats information
@@ -518,7 +525,6 @@ type NetworkConfigurationCreateSpec struct {
 	HostUplinkPnic  string   `json:"networkHostUplinkPnic,omitempty"`
 	IpRange         string   `json:"ipRange,omitempty"`
 	ExternalIpRange *IpRange `json:"externalIpRange,omitempty"`
-	DhcpServers     []string `json:"dhcpServers,omitempty"`
 }
 
 // Represents network configuration.
@@ -534,112 +540,98 @@ type NetworkConfiguration struct {
 	IpRange         string   `json:"ipRange,omitempty"`
 	FloatingIpRange *IpRange `json:"floatingIpRange,omitempty"`
 	SnatIp          string   `json:"snatIp,omitempty"`
-	DhcpServers     []string `json:"dhcpServers,omitempty"`
 }
 
-// Creation spec for subnets.
-type SubnetCreateSpec struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description,omitempty"`
-	PortGroups  []string `json:"portGroups"`
+// Represents a router
+type Router struct {
+	ID            string `json:"id"`
+	Kind          string `json:"kind"`
+	Name          string `json:"name"`
+	PrivateIpCidr string `json:"privateIpCidr"`
+	IsDefault     bool   `json:"isDefault"`
 }
 
-// Represents a subnet
-type Subnet struct {
-	Kind        string   `json:"kind"`
-	Name        string   `json:"name"`
-	Description string   `json:"description,omitempty"`
-	State       string   `json:"state"`
-	ID          string   `json:"id"`
-	PortGroups  []string `json:"portGroups"`
-	Tags        []string `json:"tags,omitempty"`
-	SelfLink    string   `json:"selfLink"`
-	IsDefault   bool     `json:"isDefault"`
+// Represents multiple routers returned by the API.
+type Routers struct {
+	Items []Router `json:"items"`
 }
 
-// Represents multiple subnets returned by the API
-type Subnets struct {
-	Items []Subnet `json:"items"`
+type RouterCreateSpec struct {
+	Name          string `json:"name"`
+	PrivateIpCidr string `json:"privateIpCidr"`
 }
 
-// Create spec for virtual subnet
-type VirtualSubnetCreateSpec struct {
-	Name                 string `json:"name"`
-	Description          string `json:"description,omitempty"`
-	RoutingType          string `json:"routingType"`
-	Size                 int    `json:"size"`
-	ReservedStaticIpSize int    `json:"reservedStaticIpSize,omitempty"`
+// Represents name that can be set for router
+type RouterUpdateSpec struct {
+	RouterName string `json:"name"`
 }
 
-// Represents a virtual network
-type VirtualSubnet struct {
-	ID             string   `json:"id"`
-	Name           string   `json:"name"`
-	Description    string   `json:"description,omitempty"`
-	State          string   `json:"state"`
-	RoutingType    string   `json:"routingType"`
-	IsDefault      bool     `json:"isDefault"`
-	Cidr           string   `json:"cidr,omitempty"`
-	LowIpDynamic   string   `json:"lowIpDynamic,omitempty"`
-	HighIpDynamic  string   `json:"highIpDynamic,omitempty"`
-	LowIpStatic    string   `json:"lowIpStatic,omitempty"`
-	HighIpStatic   string   `json:"highIpStatic,omitempty"`
-	ReservedIpList []string `json:"reservedIpList"`
-	SelfLink       string   `json:"selfLink"`
-}
-
-// Represents multiple virtual subnets returned
-type VirtualSubnets struct {
-	Items []VirtualSubnet `json:"items"`
-}
-
-// Creation spec for Cluster Configuration.
-type ClusterConfigurationSpec struct {
+// Creation spec for Service Configuration.
+type ServiceConfigurationSpec struct {
 	Type    string `json:"type"`
 	ImageID string `json:"imageId"`
 }
 
-// Represnts a Cluster configuration.
-type ClusterConfiguration struct {
+// Represnts a Service configuration.
+type ServiceConfiguration struct {
 	Kind    string `json:"kind"`
 	Type    string `json:"type"`
 	ImageID string `json:"imageId"`
 }
 
-// Creation spec for clusters.
-type ClusterCreateSpec struct {
+// Creation spec for services.
+type ServiceCreateSpec struct {
 	Name               string            `json:"name"`
 	Type               string            `json:"type"`
 	VMFlavor           string            `json:"vmFlavor,omitempty"`
+	MasterVmFlavor     string            `json:"masterVmFlavor,omitempty"`
+	WorkerVmFlavor     string            `json:"workerVmFlavor,omitempty"`
 	DiskFlavor         string            `json:"diskFlavor,omitempty"`
-	NetworkID          string            `json:"vmNetworkId,omitempty"`
+	SubnetId           string            `json:"subnetId,omitempty"`
+	ImageID            string            `json:"imageId,omitempty"`
 	WorkerCount        int               `json:"workerCount"`
 	BatchSizeWorker    int               `json:"workerBatchExpansionSize,omitempty"`
 	ExtendedProperties map[string]string `json:"extendedProperties"`
 }
 
-// Represents a cluster
-type Cluster struct {
-	Kind               string            `json:"kind"`
-	Name               string            `json:"name"`
-	State              string            `json:"state"`
-	ID                 string            `json:"id"`
-	Type               string            `json:"type"`
-	ProjectID          string            `json:"projectID,omitempty"`
-	WorkerCount        int               `json:"workerCount"`
-	SelfLink           string            `json:"selfLink,omitempty"`
-	ErrorReason        string            `json:"errorReason,omitempty"`
-	ExtendedProperties map[string]string `json:"extendedProperties"`
+// Represents a service.
+type Service struct {
+	Kind               string                `json:"kind"`
+	Name               string                `json:"name"`
+	State              string                `json:"state"`
+	ID                 string                `json:"id"`
+	Type               string                `json:"type"`
+	ImageID            string                `json:"imageId"`
+	UpgradeStatus      *ServiceUpgradeStatus `json:"upgradeStatus,omitempty"`
+	ProjectID          string                `json:"projectID,omitempty"`
+	WorkerCount        int                   `json:"workerCount"`
+	SelfLink           string                `json:"selfLink,omitempty"`
+	ErrorReason        string                `json:"errorReason,omitempty"`
+	ExtendedProperties map[string]string     `json:"extendedProperties"`
 }
 
-// Represents multiple clusters returned by the API
-type Clusters struct {
-	Items []Cluster `json:"items"`
+// Represents the status of a service during upgrade.
+type ServiceUpgradeStatus struct {
+	NewImageID           string `json:"newImageId"`
+	UpgradeMessage       string `json:"upgradeMessage,omitempty"`
+	TotalNodes           int    `json:"totalNodes,omitempty"`
+	NumNodesUpgraded     int    `json:"numNodesUpgraded"`
+	UpgradeResultMessage string `json:"upgradeResultMessage,omitempty"`
 }
 
-// Represents cluster size that can be resized for cluster
-type ClusterResizeOperation struct {
+// Represents multiple services returned by the API
+type Services struct {
+	Items []Service `json:"items"`
+}
+
+// Represents service size that can be resized for service
+type ServiceResizeOperation struct {
 	NewWorkerCount int `json:"newWorkerCount"`
+}
+
+// Represents service imageId that can be updated during change version
+type ServiceChangeVersionOperation struct {
+	NewImageID string `json:"newImageId"`
 }
 
 // Represents a security group
@@ -653,8 +645,13 @@ type SecurityGroupsSpec struct {
 	Items []string `json:"items"`
 }
 
-// Represents single availability zone.
-type AvailabilityZone struct {
+// Represents availability zone that can be set for host
+type HostSetAvailabilityZoneOperation struct {
+	AvailabilityZoneId string `json:"availabilityZoneId"`
+}
+
+// Represents single zone.
+type Zone struct {
 	Kind     string `json:"kind"`
 	Name     string `json:"name"`
 	State    string `json:"state"`
@@ -662,19 +659,14 @@ type AvailabilityZone struct {
 	SelfLink string `json:"selfLink"`
 }
 
-// Represents multiple availability zones returned by the API.
-type AvailabilityZones struct {
-	Items []AvailabilityZone `json:"items"`
+// Represents multiple zones returned by the API.
+type Zones struct {
+	Items []Zone `json:"items"`
 }
 
-// Creation spec for availability zones.
-type AvailabilityZoneCreateSpec struct {
+// Creation spec for zones.
+type ZoneCreateSpec struct {
 	Name string `json:"name"`
-}
-
-// Represents availability zone that can be set for host
-type HostSetAvailabilityZoneOperation struct {
-	AvailabilityZoneId string `json:"availabilityZoneId"`
 }
 
 // Represents the list of image datastores.
@@ -709,4 +701,56 @@ type NsxConfigurationSpec struct {
 	OverlayTransportZoneId string            `json:"overlayTransportZoneId"`
 	TunnelIpPoolId         string            `json:"tunnelIpPoolId"`
 	HostUplinkPnic         string            `json:"hostUplinkPnic"`
+	HostUplinkVlanId       int               `json:"hostUplinkVlanId"`
+	DnsServerAddresses     []string          `json:"dnsServerAddresses"`
+}
+
+// Represents port groups.
+type PortGroups struct {
+	Names []string `json:"names"`
+}
+
+// Represents a subnet
+type Subnet struct {
+	ID            string            `json:"id"`
+	Kind          string            `json:"kind"`
+	Name          string            `json:"name"`
+	Description   string            `json:"description,omitempty"`
+	PrivateIpCidr string            `json:"privateIpCidr"`
+	ReservedIps   map[string]string `json:"reservedIps"`
+	State         string            `json:"state"`
+	IsDefault     bool              `json:"isDefault"`
+	PortGroups    PortGroups        `json:"portGroups"`
+}
+
+// Represents multiple subnets returned by the API.
+type Subnets struct {
+	Items []Subnet `json:"items"`
+}
+
+// Creation spec for subnets.
+type SubnetCreateSpec struct {
+	Name          string     `json:"name"`
+	Description   string     `json:"description"`
+	PrivateIpCidr string     `json:"privateIpCidr"`
+	Type          string     `json:"type"`
+	PortGroups    PortGroups `json:"portGroups"`
+}
+
+// Represents name that can be set for subnet
+type SubnetUpdateSpec struct {
+	SubnetName string `json:"name"`
+}
+
+// Identity and Access Management (IAM)
+// IAM Policy entry
+type PolicyEntry struct {
+	Principal string   `json:"principal"`
+	Roles     []string `json:"roles"`
+}
+
+type PolicyDelta struct {
+	Principal string `json:"principal"`
+	Action    string `json:"action"`
+	Role      string `json:"role"`
 }
