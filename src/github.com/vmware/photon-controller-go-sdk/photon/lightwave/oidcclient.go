@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -168,6 +169,8 @@ type OIDCTokenResponse struct {
 }
 
 func (client *OIDCClient) GetTokenByPasswordGrant(username string, password string) (tokens *OIDCTokenResponse, err error) {
+	username = url.QueryEscape(username)
+	password = url.QueryEscape(password)
 	body := fmt.Sprintf(passwordGrantFormatString, username, password, client.Options.TokenScope)
 	return client.getToken(body)
 }
@@ -178,8 +181,6 @@ func (client *OIDCClient) GetTokenByRefreshTokenGrant(refreshToken string) (toke
 }
 
 func (client *OIDCClient) getToken(body string) (tokens *OIDCTokenResponse, err error) {
-	fmt.Println("Url: %s", client.buildUrl(tokenPath))
-	fmt.Println("Body: %s", body)
 	request, err := http.NewRequest("POST", client.buildUrl(tokenPath), strings.NewReader(body))
 	if err != nil {
 		return nil, err
