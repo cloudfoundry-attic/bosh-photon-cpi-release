@@ -178,6 +178,8 @@ func (client *OIDCClient) GetTokenByRefreshTokenGrant(refreshToken string) (toke
 }
 
 func (client *OIDCClient) getToken(body string) (tokens *OIDCTokenResponse, err error) {
+	fmt.Println("Url: %s", client.buildUrl(tokenPath))
+	fmt.Println("Body: %s", body)
 	request, err := http.NewRequest("POST", client.buildUrl(tokenPath), strings.NewReader(body))
 	if err != nil {
 		return nil, err
