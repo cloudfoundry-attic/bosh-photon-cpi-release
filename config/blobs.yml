@@ -13,6 +13,5 @@ cpi_mkisofs/smake-1.2.4.tar.bz2:
   size: 426050
 golang_1.6/go1.6.linux-amd64.tar.gz:
   object_id: c6efe75b-9fe5-44a7-ae0b-2db46252b1de
-  sha: !binary |-
-    MDFhNmEyOGRiZTMxYTUzMTAzYjYwMDk3OWJiYmJkNjNhODEwNDQ1Ng==
+  sha: 01a6a28dbe31a53103b600979bbbbd63a8104456
   size: 84799480
