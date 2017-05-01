@@ -50,7 +50,7 @@ var _ = Describe("System", func() {
 	// Tests system info
 	Describe("GetSystemInfo", func() {
 		It("GetInfoFromDeployment", func() {
-			mockDeployment := Deployment{
+			mockDeployment := SystemInfo{
 				ImageDatastores:         []string{randomString(10, "go-sdk-deployment-")},
 				UseImageDatastoreForVms: true,
 				Auth:                 &AuthInfo{},
@@ -129,7 +129,7 @@ var _ = Describe("System", func() {
 			server.SetResponseJson(200, mockTask)
 
 			// Set security groups for the system
-			expected := &Deployment{
+			expected := &SystemInfo{
 				Auth: &AuthInfo{
 					SecurityGroups: []string{
 						randomString(10),
@@ -157,7 +157,7 @@ var _ = Describe("System", func() {
 	// Tests system size
 	Describe("SystemSize", func() {
 		It("GetSystemSize", func() {
-			mockSize := &DeploymentSize{
+			mockSize := &SystemUsage{
 				NumberDatastores: 1,
 				NumberHosts:      1,
 				NumberProjects:   0,
@@ -188,6 +188,64 @@ var _ = Describe("System", func() {
 			Expect(err).Should(BeNil())
 			Expect(info).ShouldNot(BeNil())
 			Expect(info).Should(BeEquivalentTo(expected))
+		})
+	})
+
+	Describe("EnableAndDisableServiceType", func() {
+		It("Enable And Disable Service Type", func() {
+			serviceType := "SWARM"
+			serviceImageId := "testImageId"
+			serviceConfigSpec := &ServiceConfigurationSpec{
+				Type:    serviceType,
+				ImageID: serviceImageId,
+			}
+
+			mockTask := createMockTask("CONFIGURE_SERVICE", "COMPLETED")
+			server.SetResponseJson(200, mockTask)
+			enableTask, err := client.System.EnableServiceType(serviceConfigSpec)
+			enableTask, err = client.Tasks.Wait(enableTask.ID)
+
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+			Expect(enableTask).ShouldNot(BeNil())
+			Expect(enableTask.Operation).Should(Equal("CONFIGURE_SERVICE"))
+			Expect(enableTask.State).Should(Equal("COMPLETED"))
+
+			mockTask = createMockTask("DELETE_SERVICE_CONFIGURATION", "COMPLETED")
+			server.SetResponseJson(200, mockTask)
+			disableTask, err := client.System.DisableServiceType(serviceConfigSpec)
+			disableTask, err = client.Tasks.Wait(disableTask.ID)
+
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+			Expect(disableTask).ShouldNot(BeNil())
+			Expect(disableTask.Operation).Should(Equal("DELETE_SERVICE_CONFIGURATION"))
+			Expect(disableTask.State).Should(Equal("COMPLETED"))
+		})
+	})
+
+	Describe("ConfigureNsx", func() {
+		It("Configure NSX", func() {
+			nsxAddress := "nsxAddress"
+			nsxUsername := "nsxUsername"
+			nsxPassword := "nsxPassword"
+
+			nsxConfigSpec := &NsxConfigurationSpec{
+				NsxAddress:  nsxAddress,
+				NsxUsername: nsxUsername,
+				NsxPassword: nsxPassword,
+			}
+
+			mockTask := createMockTask("CONFIGURE_NSX", "COMPLETED")
+			server.SetResponseJson(200, mockTask)
+			enableTask, err := client.System.ConfigureNsx(nsxConfigSpec)
+			enableTask, err = client.Tasks.Wait(enableTask.ID)
+
+			GinkgoT().Log(err)
+			Expect(err).Should(BeNil())
+			Expect(enableTask).ShouldNot(BeNil())
+			Expect(enableTask.Operation).Should(Equal("CONFIGURE_NSX"))
+			Expect(enableTask.State).Should(Equal("COMPLETED"))
 		})
 	})
 })
