@@ -66,7 +66,7 @@ func (api *InfraHostsAPI) Get(id string) (host *Host, err error) {
 	}
 	var result Host
 	err = json.NewDecoder(res.Body).Decode(&result)
-	return &result, nil
+	return &result, err
 }
 
 // Deletes a host with specified ID.
@@ -93,6 +93,22 @@ func (api *InfraHostsAPI) Suspend(id string) (task *Task, err error) {
 	}
 	defer res.Body.Close()
 	task, err = getTask(getError(res))
+	return
+}
+
+// Gets all the VMs with the specified host ID.
+func (api *InfraHostsAPI) GetVMs(id string) (result *VMs, err error) {
+	res, err := api.client.restClient.Get(api.client.Endpoint+InfraHostsUrl+"/"+id+"/vms", api.client.options.TokenOptions)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+	res, err = getError(res)
+	if err != nil {
+		return
+	}
+	result = &VMs{}
+	err = json.NewDecoder(res.Body).Decode(result)
 	return
 }
 

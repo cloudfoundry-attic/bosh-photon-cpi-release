@@ -38,7 +38,7 @@ func (api *SystemAPI) GetSystemStatus() (status *Status, err error) {
 }
 
 // Gets the system info.
-func (api *SystemAPI) GetSystemInfo() (deployment *Deployment, err error) {
+func (api *SystemAPI) GetSystemInfo() (systemInfo *SystemInfo, err error) {
 	res, err := api.client.restClient.Get(api.getEndpointUrl("info"), api.client.options.TokenOptions)
 	if err != nil {
 		return
@@ -48,9 +48,9 @@ func (api *SystemAPI) GetSystemInfo() (deployment *Deployment, err error) {
 	if err != nil {
 		return
 	}
-	var result Deployment
+	var result SystemInfo
 	err = json.NewDecoder(res.Body).Decode(&result)
-	return &result, nil
+	return &result, err
 }
 
 // Pause system.
@@ -122,7 +122,7 @@ func (api *SystemAPI) SetSecurityGroups(securityGroups *SecurityGroupsSpec) (tas
 }
 
 // Gets the system info.
-func (api *SystemAPI) GetSystemSize() (deploymentSize *DeploymentSize, err error) {
+func (api *SystemAPI) GetSystemSize() (deploymentSize *SystemUsage, err error) {
 	res, err := api.client.restClient.Get(api.getEndpointUrl("usage"), api.client.options.TokenOptions)
 	if err != nil {
 		return
@@ -132,9 +132,9 @@ func (api *SystemAPI) GetSystemSize() (deploymentSize *DeploymentSize, err error
 	if err != nil {
 		return
 	}
-	var result DeploymentSize
+	var result SystemUsage
 	err = json.NewDecoder(res.Body).Decode(&result)
-	return &result, nil
+	return &result, err
 }
 
 // Gets authentication info.
@@ -150,6 +150,80 @@ func (api *SystemAPI) GetAuthInfo() (info *AuthInfo, err error) {
 	}
 	info = &AuthInfo{}
 	err = json.NewDecoder(res.Body).Decode(info)
+	return
+}
+
+// Gets all the system vms
+func (api *SystemAPI) GetSystemVms() (result *VMs, err error) {
+	res, err := api.client.restClient.GetList(api.client.Endpoint, api.getEndpointUrl("vms"),
+		api.client.options.TokenOptions)
+	if err != nil {
+		return
+	}
+
+	result = &VMs{}
+	err = json.Unmarshal(res, result)
+	return
+}
+
+//  Enable service type
+func (api *SystemAPI) EnableServiceType(serviceConfigSpec *ServiceConfigurationSpec) (task *Task, err error) {
+	body, err := json.Marshal(serviceConfigSpec)
+	if err != nil {
+		return
+	}
+	res, err := api.client.restClient.Post(
+		api.getEndpointUrl("enable-service-type"),
+		"application/json",
+		bytes.NewReader(body),
+		api.client.options.TokenOptions)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+
+	task, err = getTask(getError(res))
+	return
+}
+
+//  Disable service type
+func (api *SystemAPI) DisableServiceType(serviceConfigSpec *ServiceConfigurationSpec) (task *Task, err error) {
+	body, err := json.Marshal(serviceConfigSpec)
+	if err != nil {
+		return
+	}
+	res, err := api.client.restClient.Post(
+		api.getEndpointUrl("disable-service-type"),
+		"application/json",
+		bytes.NewReader(body),
+		api.client.options.TokenOptions)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+
+	task, err = getTask(getError(res))
+	return
+}
+
+// Configure NSX.
+func (api *SystemAPI) ConfigureNsx(nsxConfigSpec *NsxConfigurationSpec) (task *Task, err error) {
+	body, err := json.Marshal(nsxConfigSpec)
+	if err != nil {
+		return
+	}
+
+	res, err := api.client.restClient.Post(
+		api.getEndpointUrl("configure-nsx"),
+		"application/json",
+		bytes.NewReader(body),
+		api.client.options.TokenOptions)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+
+	task, err = getTask(getError(res))
 	return
 }
 
